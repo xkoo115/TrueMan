@@ -1,0 +1,46 @@
+base_model_name: Qwen/Qwen2.5-7B-Instruct
+device: cuda
+memory_size: 10000
+awake_threshold: 500
+max_inference_time: 30.0
+load_in_4bit: true
+load_in_8bit: false
+
+homeostasis:
+  setpoint_surprise: 0.3
+  setpoint_boredom: 0.3
+  setpoint_anxiety: 0.2
+  alpha: 1.0
+  beta: 1.0
+  gamma: 1.5
+
+thresholds:
+  surprise_update_threshold: 0.7
+  boredom_explore_threshold: 0.8
+  anxiety_introspection_threshold: 0.8
+  anxiety_emergency_threshold: 0.9
+
+surprise:
+  decay: 0.99
+  threshold: 2.0
+
+boredom:
+  window: 100
+  temperature: 1.0
+
+anxiety:
+  n_samples: 3
+  lightweight: true
+  temperature_scale: 1.5
+
+lora:
+  rank: 16
+  max_experts: 50
+  target_modules:
+    - q_proj
+    - v_proj
+    - k_proj
+    - o_proj
+  lora_alpha: 32
+  lora_dropout: 0.05
+  orthogonality_weight: 0.1
