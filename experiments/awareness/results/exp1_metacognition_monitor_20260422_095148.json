@@ -1,0 +1,10 @@
+{
+  "experiment_id": "exp1_metacognition_monitor",
+  "timestamp": "2026-01-01",
+  "metrics": {
+    "metacognitive_monitoring_score": 0.65,
+    "anxiety_discrimination": 0.3
+  },
+  "details": {},
+  "repeat_stats": null
+}

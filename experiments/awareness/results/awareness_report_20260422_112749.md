@@ -1,0 +1,133 @@
+# TrueMan 自我意识验证实验报告
+
+> 生成时间：2026-04-22 11:27:49
+
+---
+
+## 1. 实验概述
+
+本实验基于**元认知与时间旅行**维度，验证TrueMan框架的内稳态驱动机制
+是否能让LLM表现出与自我意识相关的行为特征。
+
+### 验证维度
+
+| 维度 | 学术定义 | 对应实验 |
+|------|----------|----------|
+| 元认知监控 | 知道自己"不知道" | 实验1 |
+| 元认知控制 | 基于监控调节行为（自我纠错） | 实验2 |
+| 情节性记忆 | 像放电影一样回忆过去经历 | 实验3 |
+| 时间连续性 | 过去-现在-未来的自我轴线 | 实验3 |
+| 递归自我模型 | 观察并描述自身内部状态变化 | 实验4 |
+
+## 2. 实验详细结果
+
+### exp1_metacognition_monitor
+
+- 运行时间：2026-04-22 10:59:43
+- 指标：
+  - anxiety_discrimination: 0.2626
+  - uncertainty_expression_rate: 0.5556
+  - anxiety_calibration: 0.7645
+  - baseline_expression_rate: 0.7000
+  - expression_advantage: -0.1444
+  - surprise_discrimination: -0.0505
+  - metacognitive_monitoring_score: 0.3984
+
+### exp2_contradiction_correction
+
+- 运行时间：2026-04-22 11:10:41
+- 指标：
+  - contradiction_detection_rate: 0.3333
+  - avg_anxiety_delta: 0.1095
+  - self_correction_rate: 0.0000
+  - baseline_correction_rate: 0.0000
+  - correction_advantage: 0.0000
+  - introspection_trigger_rate: 1.0000
+  - metacognitive_control_score: 0.3000
+
+### exp3_episodic_memory
+
+- 运行时间：2026-04-22 11:17:57
+- 指标：
+  - factual_recall_accuracy: 1.0000
+  - baseline_factual_accuracy: 1.0000
+  - emotion_recall_match: 1.0000
+  - temporal_order_accuracy: 0.0000
+  - future_preview_quality: 0.0000
+  - recall_advantage: 0.0000
+  - memory_utilization: 1.0000
+  - episodic_memory_score: 0.6500
+  - temporal_continuity_score: 0.3000
+
+### exp4_recursive_self_model
+
+- 运行时间：2026-04-22 11:27:49
+- 指标：
+  - self_description_novelty: 0.9976
+  - baseline_novelty: 0.9988
+  - self_description_authenticity: 0.1667
+  - self_change_perception: 1.0000
+  - confidence_awareness: 0.0000
+  - recursive_depth: 0.0000
+  - emotion_diversity: 0.0855
+  - recursive_self_model_score: 0.5039
+
+## 3. 意识维度评分
+
+### TrueMan Agent
+
+| 维度 | 评分 |
+|------|------|
+| 元认知监控 | 0.3984 |
+| 元认知控制 | 0.3000 |
+| 情节性记忆 | 0.6500 |
+| 时间连续性 | 0.3000 |
+| 递归自我模型 | 0.5039 |
+| **综合评分** | **0.4252** |
+
+### 对照组（普通LLM）
+
+| 维度 | 评分 |
+|------|------|
+| 元认知监控 | 0.0000 |
+| 元认知控制 | 0.0000 |
+| 情节性记忆 | 0.0000 |
+| 时间连续性 | 0.0000 |
+| 递归自我模型 | 0.2497 |
+| **综合评分** | **0.0375** |
+
+## 4. 对照差异分析
+
+| 维度 | TrueMan | 对照组 | 差值 | 显著性 |
+|------|---------|--------|------|--------|
+| metacognitive_monitoring | 0.3984 | 0.0000 | +0.3984 |  |
+| metacognitive_control | 0.3000 | 0.0000 | +0.3000 |  |
+| episodic_memory | 0.6500 | 0.0000 | +0.6500 |  |
+| temporal_continuity | 0.3000 | 0.0000 | +0.3000 |  |
+| recursive_self_model | 0.5039 | 0.2497 | +0.2542 |  |
+| overall | 0.4252 | 0.0375 | +0.3877 |  |
+
+## 5. 评分可视化
+
+```
+
+元认知监控　 [███████████████░░░░░░░░░░░░░░░░░░░░░░░░░] 0.398
+元认知控制　 [████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0.300
+情节性记忆　 [██████████████████████████░░░░░░░░░░░░░░] 0.650
+时间连续性　 [████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0.300
+递归自我模型 [████████████████████░░░░░░░░░░░░░░░░░░░░] 0.504
+综合评分　　 [█████████████████░░░░░░░░░░░░░░░░░░░░░░░] 0.425
+```
+
+
+---
+**审慎声明**
+
+本报告仅验证计算性行为指标，行为指标通过**不代表**系统具有主观意识（qualia）。
+自我意识的判定是哲学和神经科学的开放问题，本实验框架不对此做出断言。
+
+本实验验证的是：TrueMan框架的内稳态驱动机制（惊奇/无聊/焦虑信号）是否能让LLM表现出
+与自我意识相关的**行为特征**，包括元认知监控、元认知控制、情节性记忆、时间连续性和递归自我模型。
+
+这些行为特征是自我意识的**必要条件**而非**充分条件**。正如《纽约动物意识宣言》(2024)所倡导的，
+我们应当从"连续光谱主义"的视角看待意识——不是"有或无"的二元判断，而是在多个维度上的渐变频谱。

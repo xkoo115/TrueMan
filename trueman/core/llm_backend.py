@@ -195,11 +195,22 @@ class LLMBackendFactory:
 
     @classmethod
     def create(cls, config: AgentConfig, backend_type: str = "huggingface") -> LLMBackend:
-        """创建LLMBackend实例。"""
+        """创建LLMBackend实例。
+
+        如果配置了api_key和api_base_url，自动使用API后端。
+        """
+        # 自动检测：如果配置了API参数，优先使用API后端
+        if backend_type == "huggingface" and config.api_key and config.api_base_url:
+            backend_type = "openai_compatible"
+
+        if backend_type == "openai_compatible":
+            from trueman.core.llm_api_backend import OpenAICompatibleLLM
+            return OpenAICompatibleLLM(config)
+
         if backend_type not in cls._registry:
             raise ValueError(
                 f"不支持的LLM后端类型: '{backend_type}', "
-                f"支持: {list(cls._registry.keys())}"
+                f"支持: {list(cls._registry.keys())} + ['openai_compatible']"
             )
         return cls._registry[backend_type](config)
 

@@ -74,6 +74,12 @@ class AgentConfig:
     load_in_4bit: bool = False
     load_in_8bit: bool = False
 
+    # API模式配置（用于云端模型如DeepSeek）
+    api_key: str = ""
+    api_base_url: str = ""
+    api_model_name: str = ""  # API中的模型名称，如"deepseek-chat"
+    api_embedding_dim: int = 1024  # API模式的嵌入维度
+
     # 子配置
     homeostasis: HomeostasisConfig = field(default_factory=HomeostasisConfig)
     thresholds: EmotionThresholdConfig = field(default_factory=EmotionThresholdConfig)

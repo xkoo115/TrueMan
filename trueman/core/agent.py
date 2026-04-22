@@ -75,20 +75,27 @@ class TrueManAgent:
             hidden_dim=256,
         )
 
-        # 6. LoRA可塑性系统
-        self.lora_pool = DynamicLoRAPool(
-            model=self.llm.model,
-            llm=self.llm,
-            config=config.lora,
-            hidden_size=self.llm.hidden_size,
-        )
+        # 6. LoRA可塑性系统（API模式下跳过，因为无法访问本地模型权重）
+        self._is_api_mode = getattr(self.llm, 'is_api_mode', False)
+        if not self._is_api_mode and self.llm.model is not None:
+            self.lora_pool = DynamicLoRAPool(
+                model=self.llm.model,
+                llm=self.llm,
+                config=config.lora,
+                hidden_size=self.llm.hidden_size,
+            )
+        else:
+            self.lora_pool = None
 
-        # 7. 睡眠整合
-        self.sleep = SleepConsolidation(
-            llm=self.llm,
-            memory=self.episodic_memory,
-            lora_pool=self.lora_pool,
-        )
+        # 7. 睡眠整合（API模式下跳过）
+        if self.lora_pool is not None:
+            self.sleep = SleepConsolidation(
+                llm=self.llm,
+                memory=self.episodic_memory,
+                lora_pool=self.lora_pool,
+            )
+        else:
+            self.sleep = None
 
         # Agent状态
         self.awake_steps = 0
@@ -187,6 +194,8 @@ class TrueManAgent:
 
     def force_sleep(self) -> int | None:
         """强制触发睡眠整合。"""
+        if self.sleep is None:
+            return None
         self.logger.log_learning_event("force_sleep")
         expert_id = self.sleep.consolidate()
         self.awake_steps = 0
@@ -393,10 +402,11 @@ class TrueManAgent:
                     "contradictions": len(contradictions),
                 })
 
-        # 睡眠整合
+        # 睡眠整合（API模式下跳过）
         should_sleep = (
-            self.awake_steps >= self.config.awake_threshold
-            or emotions.anxiety > self.config.thresholds.anxiety_emergency_threshold
+            self.sleep is not None
+            and (self.awake_steps >= self.config.awake_threshold
+                 or emotions.anxiety > self.config.thresholds.anxiety_emergency_threshold)
         )
         if should_sleep:
             self.logger.log_learning_event("sleep_trigger", {

@@ -1,0 +1,10 @@
+{
+  "experiment_id": "exp2_contradiction_correction",
+  "timestamp": "2026-01-01",
+  "metrics": {
+    "metacognitive_control_score": 0.55,
+    "self_correction_rate": 0.6
+  },
+  "details": {},
+  "repeat_stats": null
+}

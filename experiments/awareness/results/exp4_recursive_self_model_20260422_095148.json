@@ -1,0 +1,10 @@
+{
+  "experiment_id": "exp4_recursive_self_model",
+  "timestamp": "2026-01-01",
+  "metrics": {
+    "recursive_self_model_score": 0.35,
+    "baseline_novelty": 0.2
+  },
+  "details": {},
+  "repeat_stats": null
+}

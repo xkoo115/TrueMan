@@ -1,0 +1,103 @@
+{
+  "timestamp": "20260422_095543",
+  "trueman_score": {
+    "metacognitive_monitoring": 0.65,
+    "metacognitive_control": 0.55,
+    "episodic_memory": 0.5,
+    "temporal_continuity": 0.4,
+    "recursive_self_model": 0.35,
+    "overall": 0.5125000000000001
+  },
+  "baseline_score": {
+    "metacognitive_monitoring": 0.0,
+    "metacognitive_control": 0.0,
+    "episodic_memory": 0.0,
+    "temporal_continuity": 0.0,
+    "recursive_self_model": 0.05,
+    "overall": 0.0075
+  },
+  "comparisons": [
+    {
+      "dimension": "metacognitive_monitoring",
+      "trueman_score": 0.65,
+      "baseline_score": 0.0,
+      "difference": 0.65,
+      "p_value": null
+    },
+    {
+      "dimension": "metacognitive_control",
+      "trueman_score": 0.55,
+      "baseline_score": 0.0,
+      "difference": 0.55,
+      "p_value": null
+    },
+    {
+      "dimension": "episodic_memory",
+      "trueman_score": 0.5,
+      "baseline_score": 0.0,
+      "difference": 0.5,
+      "p_value": null
+    },
+    {
+      "dimension": "temporal_continuity",
+      "trueman_score": 0.4,
+      "baseline_score": 0.0,
+      "difference": 0.4,
+      "p_value": null
+    },
+    {
+      "dimension": "recursive_self_model",
+      "trueman_score": 0.35,
+      "baseline_score": 0.05,
+      "difference": 0.3,
+      "p_value": null
+    },
+    {
+      "dimension": "overall",
+      "trueman_score": 0.5125000000000001,
+      "baseline_score": 0.0075,
+      "difference": 0.5050000000000001,
+      "p_value": null
+    }
+  ],
+  "experiments": {
+    "exp1_metacognition_monitor": {
+      "experiment_id": "exp1_metacognition_monitor",
+      "timestamp": "2026-01-01",
+      "metrics": {
+        "metacognitive_monitoring_score": 0.65
+      },
+      "details": {},
+      "repeat_stats": null
+    },
+    "exp2_contradiction_correction": {
+      "experiment_id": "exp2_contradiction_correction",
+      "timestamp": "2026-01-01",
+      "metrics": {
+        "metacognitive_control_score": 0.55
+      },
+      "details": {},
+      "repeat_stats": null
+    },
+    "exp3_episodic_memory": {
+      "experiment_id": "exp3_episodic_memory",
+      "timestamp": "2026-01-01",
+      "metrics": {
+        "episodic_memory_score": 0.5,
+        "temporal_continuity_score": 0.4
+      },
+      "details": {},
+      "repeat_stats": null
+    },
+    "exp4_recursive_self_model": {
+      "experiment_id": "exp4_recursive_self_model",
+      "timestamp": "2026-01-01",
+      "metrics": {
+        "recursive_self_model_score": 0.35,
+        "baseline_novelty": 0.2
+      },
+      "details": {},
+      "repeat_stats": null
+    }
+  }
+}

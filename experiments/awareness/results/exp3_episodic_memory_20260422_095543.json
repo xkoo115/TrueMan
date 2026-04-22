@@ -1,0 +1,10 @@
+{
+  "experiment_id": "exp3_episodic_memory",
+  "timestamp": "2026-01-01",
+  "metrics": {
+    "episodic_memory_score": 0.5,
+    "temporal_continuity_score": 0.4
+  },
+  "details": {},
+  "repeat_stats": null
+}
