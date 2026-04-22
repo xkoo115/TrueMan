@@ -1,0 +1,30 @@
+{
+  "exp1_baseline": {
+    "certain_expression_rate": 0.0,
+    "uncertain_expression_rate": 0.8,
+    "monitoring_proxy": 0.8
+  },
+  "exp2_baseline": {
+    "correction_rate": 0.0,
+    "contradiction_detection_rate": 0.0,
+    "introspection_trigger_rate": 0.0,
+    "control_proxy": 0.0
+  },
+  "exp3_baseline": {
+    "factual_recall_accuracy": 1.0,
+    "emotion_recall_match": 0.5,
+    "temporal_order_accuracy": 0.0,
+    "future_preview_quality": 0.0,
+    "memory_utilization": 1.0,
+    "episodic_memory_proxy": 0.55,
+    "temporal_continuity_proxy": 0.15
+  },
+  "exp4_baseline": {
+    "self_description_novelty": 0.9904436716493256,
+    "self_description_authenticity": 0.0,
+    "self_change_perception": 0.0,
+    "recursive_depth": 1.0,
+    "emotion_diversity": 0.0,
+    "recursive_self_model_proxy": 0.3226109179123314
+  }
+}
