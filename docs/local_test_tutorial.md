@@ -646,3 +646,77 @@ python -m experiments.awareness.run_all \
     --quantization 4bit \
     --repeats 1
 ```
+
+---
+
+## 11. 无 GPU 机器快速开始（CPU 模式）
+
+如果你只有 CPU（如 i7-12700 + 32GB 内存），流程可以跑通但速度较慢。
+
+### 已验证的环境
+
+| 项目 | 值 |
+|------|-----|
+| CPU | i7-12700 |
+| 内存 | 32GB |
+| Python | 3.12.9 |
+| PyTorch | 2.11.0+cpu |
+| 模型 | Qwen2.5-1.5B-Instruct (float32, 约6GB内存) |
+
+### 已验证的流程节点
+
+| 验证项 | 结果 | 说明 |
+|--------|------|------|
+| 核心模块导入 | PASS | config/homeostasis/memory/policy/plasticity/sleep 全部导入成功 |
+| 内稳态信号计算 | PASS | 惊奇/无聊/焦虑信号正常计算和整合 |
+| 记忆系统 | PASS | 情景记忆存储/回放/矛盾检测正常 |
+| 模型加载 (CPU) | PASS | 1.5B 模型 float32 加载约 13-27s |
+| 推理 (CPU) | PASS | 50 token 推理约 6-7s |
+| Encode (CPU) | PASS | 获取 state_embedding + token_logprobs 约 0.2s |
+| Agent 初始化 | PASS | TrueManAgent 完整初始化约 14s |
+| 单步交互 | PASS | 每步约 50-120s（含焦虑采样推理） |
+| LoRA 训练 (CPU) | PASS | 20步训练约 145s，适配器保存成功 |
+| LoRA 热加载 | PASS | 适配器加载/切换/推理正常 |
+| 睡眠整合触发 | PASS | NREM+REM 阶段正常执行 |
+| DynamicLoRAPool | PASS | 专家池初始化和管理正常 |
+
+### 性能参考（CPU, i7-12700, 1.5B 模型）
+
+| 操作 | 耗时 |
+|------|------|
+| 模型加载 | ~15s |
+| 单步交互（含焦虑采样） | ~60-120s |
+| LoRA 训练每步 | ~7s |
+| 睡眠整合（10步NREM+2步REM） | ~90s |
+| 完整验证（3步交互+睡眠） | ~5-8 分钟 |
+
+### 快速开始命令
+
+```bash
+# 1. 安装依赖（CPU 版 PyTorch）
+pip install torch>=2.1.0
+pip install transformers>=4.36.0 peft>=0.7.0 accelerate>=0.25.0 pyyaml>=6.0 numpy>=1.24.0
+
+# 2. 设置 HuggingFace 镜像（加速下载）
+export HF_ENDPOINT=https://hf-mirror.com
+# Windows PowerShell:
+# $env:HF_ENDPOINT = "https://hf-mirror.com"
+
+# 3. 运行 CPU 快速验证脚本（推荐）
+python -m experiments.awareness.run_cpu_quick
+
+# 或直接用 run_all.py（较慢，约 30-60 分钟）
+python -m experiments.awareness.run_all \
+    --model Qwen/Qwen2.5-1.5B-Instruct \
+    --device cpu \
+    --repeats 1
+```
+
+### CPU 模式注意事项
+
+1. **必须用小模型**：1.5B 或 3B，7B 在 CPU 上太慢
+2. **不能用量化**：bitsandbytes 需要 CUDA，CPU 上只能 float32
+3. **焦虑采样很慢**：`anxiety.n_samples=1` 可大幅加速（默认3次推理）
+4. **内存注意**：1.5B float32 约 6GB，确保可用内存 > 8GB
+5. **进程残留**：如果中断后内存不释放，手动 kill 残留 Python 进程
+6. **LoRA 热加载限制**：当前 HotLoader 要求模型先被包装为 PeftModel，睡眠整合产出的新专家需要额外处理才能热加载（直接训练+保存已验证通过）
