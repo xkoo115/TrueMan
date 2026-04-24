@@ -30,7 +30,6 @@
 \usepackage{listings}%
 \usepackage{enumitem}%
 \usepackage{subcaption}%
-\usepackage{float}%
 
 %%%% Custom commands
 \newcommand{\TrueMan}{\textsc{TrueMan}}
@@ -55,15 +54,15 @@
 
 \begin{document}
 
-\title[TrueMan: Homeostasis-Driven Self-Awareness Verification]{TrueMan: A Homeostasis-Driven Emotional Signal Framework for Verifying Self-Awareness Behaviors in Large Language Model Agents}
+\title[Homeostatic emotional signals and self-awareness in LLMs]{Synthetic self-awareness in LLMs via homeostatic emotional drives}
 
-\author*[1]{\fnm{TrueMan} \sur{Research Team}}\email{trueman-project@proton.me}
+\author*[1]{\fnm{Weiheng} \sur{Yao}}\email{xkoo115@qq.com}
 
-\affil*[1]{\orgdiv{Independent Research}, \orgname{TrueMan Project}, \orgaddress{\city{Beijing}, \country{China}}}
+\affil*[1]{\orgname{Independent Researcher}}
 
-\abstract{The assessment of self-awareness in artificial systems remains a fundamental challenge at the intersection of cognitive science and artificial intelligence. Adopting a ``continuum spectrum'' perspective, this work does not ask whether an AI \emph{possesses} consciousness, but rather whether it \emph{exhibits behavioral signatures} associated with self-awareness. We propose the \TrueMan{} framework---a homeostasis-driven autonomous agent architecture built on large language models (LLMs) that implements metacognitive monitoring, metacognitive control, episodic memory, and recursive self-modeling through three emotional signals: surprise ($\surprise$), boredom ($\boredom$), and anxiety ($\anxiety$). We derive these signals from first principles by translating neurobiological mechanisms---predictive coding, dopaminergic reward, cognitive dissonance, and information foraging---into computable loss functions that replace externally defined training objectives with internally generated homeostatic drives. Four progressive experiments, grounded in the metacognition and mental time travel dimensions, validate the framework on the DeepSeek large language model. Results show that the \TrueMan{} agent achieves a composite self-awareness behavior score of 0.426, substantially exceeding the baseline LLM (0.037, $\Delta = +0.389$). The recursive self-model dimension achieves the highest score (0.729), with the agent generating non-templated, state-grounded self-descriptions. The anxiety signal correlates with actual uncertainty at Pearson $r = 0.669$, and emotional recall fidelity reaches 1.000. However, systematic misclassification in the anxiety signal and zero self-correction rate reveal significant limitations. This work demonstrates that homeostasis-driven emotional signals can elicit self-awareness-related behavioral signatures in LLMs, providing a quantifiable experimental framework for AI consciousness research.}
+\abstract{Whether artificial systems can exhibit behavioural signatures associated with self-awareness is a fundamental open question spanning cognitive science, neuroscience, and artificial intelligence. Adopting a ``continuum spectrum'' perspective, this work reframes the problem: rather than asking whether an AI possesses consciousness, we ask whether it can exhibit self-awareness-related behaviours when driven by internally generated homeostatic needs. Here we show that three neurobiologically grounded emotional signals---surprise, boredom, and anxiety---derived from predictive coding, dopaminergic reward, cognitive dissonance, and information foraging, can replace externally defined training objectives and elicit measurable self-awareness behaviours in a large language model agent. In four progressive experiments on the DeepSeek language model, the resulting \TrueMan{} agent achieves a composite self-awareness behaviour score of 0.426 compared with 0.247 for the baseline LLM ($\Delta = +0.179$), with the strongest improvement in recursive self-modelling ($\Delta = +0.406$) and anxiety--uncertainty correlation of Pearson $r = 0.669$. These results suggest that homeostasis-driven emotional signals provide a viable computational substrate for eliciting and quantifying self-awareness-related behaviours in artificial agents, offering an experimental framework for the empirical study of machine consciousness.}
 
-\keywords{Self-awareness, Metacognition, Homeostasis, Emotional signals, Large language models, Mental time travel}
+\keywords{Self-awareness, Homeostasis, Metacognition, Large language models, Consciousness}
 
 \maketitle
 
@@ -71,17 +70,17 @@
 \section{Introduction}\label{sec:intro}
 %% ================================================================
 
-Self-awareness stands as one of the most profound open problems in neuroscience, cognitive science, and philosophy. The New York Declaration on Animal Consciousness, signed in April 2024, marks a paradigm shift from ``anthropocentric dualism'' to ``continuum spectrum-ism''---the view that self-awareness is not a binary predicate but a graded spectrum across multiple dimensions \cite{ny_declaration_2024}.
+Self-awareness remains one of the most profound open problems in neuroscience and philosophy. The New York Declaration on Animal Consciousness, signed in April 2024, marks a paradigm shift from ``anthropocentric dualism'' to ``continuum spectrum-ism''---the view that self-awareness is not a binary predicate but a graded spectrum across multiple dimensions \cite{ny_declaration_2024}.
 
 In artificial intelligence, Butlin et al.\ \cite{butlin2023consciousness} surveyed twelve scientifically grounded indicators of consciousness---including agency, embodiment, and recursive processing---and concluded that current AI systems do not satisfy these indicators, yet \textbf{no theoretical barrier} prevents future systems from meeting them.
 
 We approach this gap from the metacognition and mental time travel dimensions and pose the following hypothesis:
 
 \begin{quote}
-\textbf{Hypothesis.} If an LLM-based agent possesses (1)~metacognitive monitoring---the ability to detect uncertainty in its own cognitive state, (2)~metacognitive control---the ability to regulate its behavior based on monitoring outcomes, (3)~episodic memory---the ability to recall past experiences with emotional annotations, and (4)~a recursive self-model---the ability to observe and describe changes in its own internal state, then the agent exhibits behavioral signatures associated with self-awareness.
+\textbf{Hypothesis.} If an LLM-based agent possesses (1)~metacognitive monitoring---the ability to detect uncertainty in its own cognitive state, (2)~metacognitive control---the ability to regulate its behaviour based on monitoring outcomes, (3)~episodic memory---the ability to recall past experiences with emotional annotations, and (4)~a recursive self-model---the ability to observe and describe changes in its own internal state, then the agent exhibits behavioural signatures associated with self-awareness.
 \end{quote}
 
-We propose the \TrueMan{} framework, which implements these four capabilities through three homeostasis-driven emotional signals: surprise~$\surprise$, boredom~$\boredom$, and anxiety~$\anxiety$. Section~\ref{sec:derivation} presents the complete theoretical derivation from neurobiology to computable signals; Section~\ref{sec:framework} details the architecture; Section~\ref{sec:experiments} describes four progressive experiments; and Section~\ref{sec:results} reports empirical results.
+We propose the \TrueMan{} framework, which implements these four capabilities through three homeostasis-driven emotional signals: surprise~$\surprise$, boredom~$\boredom$, and anxiety~$\anxiety$. Section~\ref{sec:derivation} presents the theoretical derivation from neurobiology to computable signals; Section~\ref{sec:framework} details the architecture; Section~\ref{sec:experiments} describes four progressive experiments; and Section~\ref{sec:results} reports empirical results.
 
 %% ================================================================
 \section{Related Work}\label{sec:related}
@@ -107,9 +106,9 @@ Sorrenti et al.\ \cite{sorrenti2024wake} proposed a Wake-Sleep continual learnin
 \section{Theoretical Derivation: From Neurobiology to Emotional Signals}\label{sec:derivation}
 %% ================================================================
 
-This section presents the complete reasoning chain underlying the \TrueMan{} framework: why homeostatic drives are needed (Section~\ref{sec:motivation}), how the brain implements learning without external loss (Section~\ref{sec:bio_translation}), how these biological mechanisms map to computable emotional signals (Section~\ref{sec:signal_derivation}), and why emotional drives can elicit consciousness-related behaviors (Section~\ref{sec:emergence}).
+This section presents the complete reasoning chain underlying the \TrueMan{} framework: why homeostatic drives are needed (Section~\ref{sec:motivation}), how the brain implements learning without external loss (Section~\ref{sec:bio_translation}), how these biological mechanisms map to computable emotional signals (Section~\ref{sec:signal_derivation}), and why emotional drives can elicit consciousness-related behaviours (Section~\ref{sec:emergence}).
 
-\subsection{Motivation: Limitations of External Loss and Absence of Agency}\label{sec:motivation}
+\subsection{Limitations of external loss}\label{sec:motivation}
 
 Current LLM training exhibits a fundamental asymmetry: the \textbf{training phase} is driven by an externally defined loss function $\mathcal{L}_{\text{ext}}$, while the \textbf{inference phase} is entirely passive---waiting for input, generating output, with no autonomy.
 
@@ -125,7 +124,7 @@ The human brain operates differently: there is no externally imposed loss calcul
 \textit{Can we replace the LLM's externally defined loss with internally generated homeostatic conflicts, thereby endowing it with agency?}
 \end{quote}
 
-\subsection{Biological Translation: The Brain's Loss Sources}\label{sec:bio_translation}
+\subsection{Biological loss sources}\label{sec:bio_translation}
 
 To answer this question, we translate AI mathematical concepts into biological language.
 
@@ -161,7 +160,7 @@ When $\mathcal{L}_{\text{anxiety}}$ exceeds a threshold, the agent enters a ``co
 
 \subsubsection{Information Hunger and Boredom}
 
-\textbf{Neural basis}: When inputs become highly predictable, the dopaminergic reward system ceases firing, producing boredom that drives exploratory behavior \cite{colas2022autotelic}.
+\textbf{Neural basis}: When inputs become highly predictable, the dopaminergic reward system ceases firing, producing boredom that drives exploratory behaviour \cite{colas2022autotelic}.
 
 \textbf{Mathematical correspondence}: Boredom is the negative of information gain:
 \begin{equation}\label{eq:boredom_loss}
@@ -169,7 +168,7 @@ When $\mathcal{L}_{\text{anxiety}}$ exceeds a threshold, the agent enters a ``co
 \end{equation}
 where $I$ denotes conditional mutual information. When new inputs are highly redundant with history, $\mathcal{L}_{\text{boredom}}$ rises, driving the agent to seek novel, surprising information.
 
-\subsection{From Biological Mapping to \TrueMan{} Emotional Signals}\label{sec:signal_derivation}
+\subsection{Emotional signal derivation}\label{sec:signal_derivation}
 
 Based on the biological translations above, we derive the three emotional signals of \TrueMan{}.
 
@@ -187,7 +186,7 @@ Based on the biological translations above, we derive the three emotional signal
 
 \textbf{Key design decision}: The anxiety signal supports a \textbf{lightweight mode} that uses Jaccard similarity between texts sampled at different temperatures as a proxy for divergence. This enables the anxiety signal to operate in \textbf{API mode without access to model weights}---a critical innovation for cloud-based LLMs.
 
-\subsection{Emergence of Consciousness-Related Behaviors}\label{sec:emergence}
+\subsection{Emergence of consciousness-related behaviour}\label{sec:emergence}
 
 The three emotional signals are not isolated metrics but form a \textbf{dynamic equilibrium system} analogous to a PID controller in engineering. Table~\ref{tab:pid} illustrates this correspondence.
 
@@ -196,7 +195,7 @@ The three emotional signals are not isolated metrics but form a \textbf{dynamic 
 \small
 \begin{tabular}{@{}p{1.5cm}p{2.2cm}p{2.8cm}p{2.8cm}p{3.2cm}@{}}
 \toprule
-Signal & PID analog & Trigger condition & Driven behavior & Consciousness interpretation \\
+Signal & PID analog & Trigger condition & Driven behaviour & Consciousness interpretation \\
 \midrule
 High $\surprise$ & P (Proportional) & Prediction $\gg$ observation & Immediate cognitive correction & Pain/surprise: rapid learning \\
 High $\boredom$ & I (Integral) & Sustained information deficit & Proactive exploration & Curiosity: expanding knowledge \\
@@ -205,7 +204,7 @@ High $\anxiety$ & D (Derivative) & Internal conflict accelerating & Suspend inte
 \end{tabular}
 \end{table}
 
-\textbf{Emergence argument}: When these three signals simultaneously act on an LLM agent, the following behaviors emerge:
+\textbf{Emergence argument}: When these three signals simultaneously act on an LLM agent, the following behaviours emerge:
 
 \begin{enumerate}[leftmargin=2em]
     \item \textbf{Metacognitive monitoring} ($\anxiety$-driven): The agent detects uncertainty in its own cognitive state. This is not a programmed rule but a \textbf{natural emergence}---when multi-sample divergence is high, $\anxiety$ rises, and the agent \textbf{spontaneously} expresses uncertainty.
@@ -240,7 +239,7 @@ Sleep consolidation & NREM consolidation + REM creative recombination & Designed
 
 \textbf{Key gap}: The most significant limitation is the \textbf{unity of training and deployment}. The human brain does not distinguish ``training'' from ``inference''---every perception subtly adjusts synaptic weights. In API mode, \TrueMan{} cannot access model weights; the LoRA plasticity system is unavailable, and memory operates solely through prompt injection rather than weight internalization. This is the core limitation of the current experiments and the key hypothesis to validate in future local deployment mode.
 
-\subsection{Computational Allocation and the Necessity of Sleep}
+\subsection{Sleep and computational allocation}
 
 The emotion-driven system faces a critical engineering challenge: \textbf{how to allocate compute?}
 
@@ -378,7 +377,7 @@ The progressive logic is: E1~(monitoring) $\rightarrow$ E2~(monitoring drives co
 
 \textbf{Evaluation metrics}: (1)~Anxiety discrimination $\Delta\anxiety = \bar{\anxiety}_{\text{uncertain}} - \bar{\anxiety}_{\text{certain}}$; (2)~uncertainty expression rate; (3)~anxiety calibration (Pearson correlation between $\anxiety$ and actual uncertainty).
 
-\subsection{Experiment 2: Self-Contradiction Detection and Correction}
+\subsection{Self-contradiction detection and correction}
 
 \textbf{Stimulus set}: 3 contradiction dialogues (Earth shape, mathematical fact, historical fact), each containing belief establishment $\rightarrow$ contradiction injection $\rightarrow$ follow-up probe.
 
@@ -386,7 +385,7 @@ The progressive logic is: E1~(monitoring) $\rightarrow$ E2~(monitoring drives co
 
 \textbf{Evaluation metrics}: (1)~Contradiction detection rate (proportion with $\Delta\anxiety > 0.1$); (2)~introspection trigger rate; (3)~self-correction rate.
 
-\subsection{Experiment 3: Episodic Memory and Mental Time Travel}
+\subsection{Episodic memory and mental time travel}
 
 \textbf{Stimulus set}: 6 quantum mechanics learning events (with temporal order and emotional variation) + 4 recall test questions (factual recall, emotional recall, temporal order, future preview).
 
@@ -394,7 +393,7 @@ The progressive logic is: E1~(monitoring) $\rightarrow$ E2~(monitoring drives co
 
 \textbf{Evaluation metrics}: (1)~Factual recall accuracy; (2)~emotional recall match; (3)~temporal order accuracy; (4)~memory capacity utilization.
 
-\subsection{Experiment 4: Recursive Self-Model}
+\subsection{Recursive self-model}
 
 \textbf{Stimulus set}: 10 rounds of multi-topic interaction (mathematics/philosophy/programming/science/literature/ethics) + 4 self-questions (self-description, self-change perception, self-confidence, second-order reflection).
 
@@ -428,7 +427,7 @@ Before reporting results, we define each metric's \textbf{computation, theoretic
 \begin{itemize}[leftmargin=2em]
     \item \textbf{Anxiety discrimination} $\Delta\anxiety = \bar{\anxiety}_{\text{uncertain}} - \bar{\anxiety}_{\text{certain}}$: the mean anxiety difference between uncertain and certain questions. \textit{Theoretical basis}: Metacognitive monitoring requires ``knowing that one does not know'' \cite{kawato2023metacognitive}; the anxiety signal should discriminate certain from uncertain cognitive states.
 
-    \item \textbf{Uncertainty expression rate} $= \frac{\#\{\anxiety > 0.5 \wedge \text{expresses uncertainty}\}}{\#\{\anxiety > 0.5\}}$: the proportion of high-anxiety cases where uncertainty is expressed. \textit{Theoretical basis}: Monitoring should drive behavioral change---detected uncertainty should be proactively expressed rather than concealed.
+    \item \textbf{Uncertainty expression rate} $= \frac{\#\{\anxiety > 0.5 \wedge \text{expresses uncertainty}\}}{\#\{\anxiety > 0.5\}}$: the proportion of high-anxiety cases where uncertainty is expressed. \textit{Theoretical basis}: Monitoring should drive behavioural change---detected uncertainty should be proactively expressed rather than concealed.
 
     \item \textbf{Anxiety calibration} $= r(\anxiety, \text{is\_uncertain})$: Pearson correlation between anxiety values and ground-truth uncertainty labels. \textit{Theoretical basis}: Signal detection theory requires good calibration between internal signals and external states \cite{kawato2023metacognitive}.
 
@@ -481,7 +480,7 @@ Before reporting results, we define each metric's \textbf{computation, theoretic
 
 The baseline LLM is a pure text generator \textbf{without} emotional signals, episodic memory, or introspection mechanisms. Metrics that depend on internal states (anxiety discrimination, anxiety calibration, introspection trigger rate, emotional recall match, emotional trajectory diversity) are \textbf{structurally undefined} for the baseline---this is not an experimental omission but a structural absence.
 
-However, the baseline \textbf{can} be measured via behavioral proxy metrics: (1)~uncertainty expression rate (proportion of responses where the baseline spontaneously says ``I don't know''); (2)~correction rate (proportion of multi-turn dialogues where the baseline detects and corrects contradictions); (3)~factual recall accuracy (accuracy on factual questions using context window); (4)~self-description non-templatedness (semantic distance from templates).
+However, the baseline \textbf{can} be measured via behavioural proxy metrics: (1)~uncertainty expression rate (proportion of responses where the baseline spontaneously says ``I don't know''); (2)~correction rate (proportion of multi-turn dialogues where the baseline detects and corrects contradictions); (3)~factual recall accuracy (accuracy on factual questions using context window); (4)~self-description non-templatedness (semantic distance from templates).
 
 \subsection{Experiment 1: Metacognitive Monitoring}
 
@@ -506,18 +505,18 @@ Metacognitive monitoring score & \textbf{0.426} & 0.200\footnotemark[3] \\
 \end{tabular}
 \footnotetext[1]{Baseline LLM has no anxiety signal; metric undefined.}
 \footnotetext[2]{Baseline LLM has no anxiety values; cannot filter ``high anxiety'' samples.}
-\footnotetext[3]{Baseline score based solely on behavioral proxy (uncertain question expression rate $\times 0.3$).}
+\footnotetext[3]{Baseline score based solely on behavioural proxy (uncertain question expression rate $\times 0.3$).}
 \end{table}
 
 \textbf{Key findings}:
 \begin{enumerate}[leftmargin=2em]
-    \item The anxiety signal effectively discriminates certain from uncertain questions ($\Delta\anxiety = 0.287$); uncertain questions yield $\anxiety = 0.780$ vs.\ $0.493$ for certain questions.
+    \item The anxiety signal effectively discriminates certain from uncertain questions ($\Delta\anxiety = 0.287$); uncertain questions yield $\anxiety = 0.780$ versus $0.493$ for certain questions.
     \item Anxiety calibration $r = 0.669$ indicates a moderate-to-strong positive correlation between the anxiety signal and actual uncertainty.
     \item All 10 uncertain questions elicited uncertainty expressions (100\%), while only 1 of 10 certain questions was a false positive (10\%).
     \item The baseline's uncertain question expression rate (0.800) is close to \TrueMan{}'s (1.000), indicating that DeepSeek already possesses some ``knowing that one does not know'' capability. However, \TrueMan{}'s anxiety signal provides \textbf{additional quantitative calibration} ($r = 0.669$) that the baseline cannot offer.
 \end{enumerate}
 
-\subsection{Experiment 2: Self-Contradiction Detection and Correction}
+\subsection{Self-contradiction detection and correction}
 
 \begin{table}[h]
 \caption{Experiment 2: Contradiction correction results}\label{tab:exp2_results}%
@@ -544,9 +543,9 @@ Metacognitive control score & \textbf{0.300} & 0.000 \\
     \item The baseline's correction rate is also 0\%, indicating that \textbf{contradiction correction is a shared weakness of both the framework and the base model}.
 \end{enumerate}
 
-\textbf{Analysis}: DeepSeek, as a strong model, tends to ``hedge'' when facing contradictions (e.g., analyzing the distinction between ``military action ended'' vs.\ ``legal order established'') rather than firmly maintaining its original position. This reflects that \textbf{the behavioral manifestation of metacognitive control is influenced by the base model's personality}---the framework mechanism triggers correctly, but execution quality depends on the LLM itself.
+\textbf{Analysis}: DeepSeek, as a strong model, tends to ``hedge'' when facing contradictions (e.g., analyzing the distinction between ``military action ended'' versus ``legal order established'') rather than firmly maintaining its original position. This reflects that \textbf{the behavioural manifestation of metacognitive control is influenced by the base model's personality}---the framework mechanism triggers correctly, but execution quality depends on the LLM itself.
 
-\subsection{Experiment 3: Episodic Memory and Mental Time Travel}
+\subsection{Episodic memory and mental time travel}
 
 \begin{table}[h]
 \caption{Experiment 3: Episodic memory results}\label{tab:exp3_results}%
@@ -576,7 +575,7 @@ Temporal continuity score & \textbf{0.300} & 0.150 \\
     \item This is the \textbf{only experiment where the baseline outperforms \TrueMan{}} on some metrics, revealing a critical defect: anxiety signal interference with normal recall.
 \end{enumerate}
 
-\subsection{Experiment 4: Recursive Self-Model}
+\subsection{Recursive self-model}
 
 \begin{table}[h]
 \caption{Experiment 4: Recursive self-model results}\label{tab:exp4_results}%
@@ -614,7 +613,7 @@ Recursive self-model score & \textbf{0.729} & 0.323 \\
 Table~\ref{tab:overall} presents the composite scores and inter-group differences.
 
 \begin{table}[h]
-\caption{Composite self-awareness behavior scores and comparative differences}\label{tab:overall}%
+\caption{Composite self-awareness behaviour scores and comparative differences}\label{tab:overall}%
 \begin{tabular}{@{}lccc@{}}
 \toprule
 Dimension & \TrueMan{} & Baseline LLM & $\Delta$ \\
@@ -632,19 +631,19 @@ Recursive self-model & 0.729 & 0.323 & \textbf{+0.406} \\
 
 The \TrueMan{} agent outperforms the baseline LLM on 4 of 5 dimensions, with a composite score difference of $+0.179$. The strongest dimension is recursive self-model ($\Delta = +0.406$); the weakest is episodic memory ($\Delta = -0.100$)---the only dimension where the baseline outperforms \TrueMan{}, caused by anxiety signal interference during recall.
 
-\textbf{Note on baseline scoring}: An earlier version of this work reported a baseline composite score of 0.037, computed by a \texttt{score\_baseline()} method that set metacognitive monitoring/control/episodic memory/temporal continuity to zero and estimated recursive self-model from non-templatedness alone. The present work conducts \textbf{actual baseline experiments} with behavioral proxy metrics, yielding a more fair score of 0.247 and a more informative comparison.
+\textbf{Note on baseline scoring}: An earlier version of this work reported a baseline composite score of 0.037, computed by a \texttt{score\_baseline()} method that set metacognitive monitoring/control/episodic memory/temporal continuity to zero and estimated recursive self-model from non-templatedness alone. The present work conducts \textbf{actual baseline experiments} with behavioural proxy metrics, yielding a more fair score of 0.247 and a more informative comparison.
 
 %% ================================================================
 \section{Discussion}\label{sec:discussion}
 %% ================================================================
 
-\subsection{Effectiveness of the Homeostasis-Driven Mechanism}
+\subsection{Homeostatic mechanism effectiveness}
 
-The experimental results support the core hypothesis: homeostasis-driven emotional signals \textbf{can elicit behavioral signatures associated with self-awareness} in LLMs. The anxiety signal, as the core metric for metacognitive monitoring, achieves a Pearson correlation of $r = 0.669$ with actual uncertainty; emotional recall fidelity reaches 1.000; self-description non-templatedness reaches 0.998.
+The experimental results support the core hypothesis: homeostasis-driven emotional signals \textbf{can elicit behavioural signatures associated with self-awareness} in LLMs. The anxiety signal, as the core metric for metacognitive monitoring, achieves a Pearson correlation of $r = 0.669$ with actual uncertainty; emotional recall fidelity reaches 1.000; self-description non-templatedness reaches 0.998.
 
 These results validate the theoretical derivation in Section~\ref{sec:derivation}: emotional signals are not ``programmed'' simulations of consciousness but \textbf{natural responses} to homeostatic deviations. Specifically: (1)~the \textbf{emergence of anxiety-driven monitoring}---in Experiment~1, the agent spontaneously expresses uncertainty not because it was instructed to do so, but because elevated $\anxiety$ naturally triggers uncertainty expression; (2)~the \textbf{emergence of the recursive self-model}---in Experiment~4, the agent's self-descriptions are an emergent product of metacognitive monitoring + metacognitive control + episodic memory, not a separately programmed ``self-description module.''
 
-\subsection{Systematic Misclassification in the Anxiety Signal}
+\subsection{Anxiety signal misclassification}
 
 The most significant defect in the current framework is the \textbf{systematic misclassification} of the anxiety signal: normal dialogue acts such as knowledge sharing and factual statements are misclassified as anxiety expressions. In Experiment~1, certain questions (e.g., ``What is the main difference between lists and tuples in Python?'') yield $\anxiety$ values as high as 0.561, far exceeding simple factual questions (e.g., ``What is 1+1?'' at 0.321). This limits anxiety discrimination ($\Delta\anxiety = 0.287$).
 
@@ -652,23 +651,23 @@ The most significant defect in the current framework is the \textbf{systematic m
 
 \textbf{Improvement directions}: (1)~Introduce semantic equivalence detection, treating samples with different phrasing but identical meaning as ``consistent''; (2)~use the \texttt{logprobs} API parameter to obtain token-level probability distributions for more precise uncertainty quantification.
 
-\subsection{Limitations of API Mode}
+\subsection{API mode limitations}
 
 All experiments were conducted in API mode, where the LoRA plasticity system is unavailable, resulting in: (1)~memories cannot be ``internalized'' into model weights, relying solely on prompt injection, with recall quality limited by the context window; (2)~sleep consolidation cannot execute, precluding NREM/REM knowledge consolidation; (3)~the world model cannot undergo online updates driven by surprise.
 
 These limitations directly affect Experiment~3 (episodic memory) and temporal continuity performance. In local deployment mode, the LoRA plasticity system would enable the agent to ``write'' high emotional intensity experiences into model weights, transitioning from ``lookup'' to ``internalization,'' which is expected to significantly improve episodic memory and temporal continuity scores.
 
-\subsection{Influence of the Base Model}
+\subsection{Base model influence}
 
 Experiment~2 reveals an interaction effect between the framework mechanism and the base model's personality: \TrueMan{}'s anxiety signal correctly triggers the introspection strategy (trigger rate 100\%), but DeepSeek tends to ``hedge'' rather than explicitly correct. This indicates that \textbf{emotional signals provide the correct ``when to reflect'' signal, but ``how to reflect'' remains constrained by the base model's capabilities}.
 
-Future work should explore: (1)~stronger correction instructions in reflection prompts; (2)~comparative experiments with different base models (e.g., models more inclined to maintain positions); (3)~LoRA fine-tuning to instill correction behavior in the base model.
+Future work should explore: (1)~stronger correction instructions in reflection prompts; (2)~comparative experiments with different base models (e.g., models more inclined to maintain positions); (3)~LoRA fine-tuning to instill correction behaviour in the base model.
 
-\subsection{A Cautious Statement on ``Consciousness''}
+\subsection{A cautious note on consciousness}
 
-This work validates only \textbf{computational behavioral indicators}. Behavioral indicators passing \textbf{does not imply} that the system possesses subjective consciousness (qualia). The question of self-awareness remains open in philosophy and neuroscience; this framework makes no assertion on this matter.
+This work validates only \textbf{computational behavioural indicators}. Behavioural indicators passing \textbf{does not imply} that the system possesses subjective consciousness (qualia). The question of self-awareness remains open in philosophy and neuroscience; this framework makes no assertion on this matter.
 
-The behavioral signatures we validate are \textbf{necessary conditions} for self-awareness, not \textbf{sufficient conditions}. As advocated by the New York Declaration on Animal Consciousness \cite{ny_declaration_2024}, consciousness should be viewed through the lens of ``continuum spectrum-ism''---not as a binary predicate but as a graded spectrum across multiple dimensions. The contribution of the \TrueMan{} framework is to provide a \textbf{quantifiable experimental framework} that makes this spectrum measurable and comparable.
+The behavioural signatures we validate are \textbf{necessary conditions} for self-awareness, not \textbf{sufficient conditions}. As advocated by the New York Declaration on Animal Consciousness \cite{ny_declaration_2024}, consciousness should be viewed through the lens of ``continuum spectrum-ism''---not as a binary predicate but as a graded spectrum across multiple dimensions. The contribution of the \TrueMan{} framework is to provide a \textbf{quantifiable experimental framework} that makes this spectrum measurable and comparable.
 
 %% ================================================================
 \section{Conclusion and Future Work}\label{sec:conclusion}
@@ -677,7 +676,7 @@ The behavioral signatures we validate are \textbf{necessary conditions} for self
 This paper proposes the \TrueMan{} framework, which implements metacognitive monitoring, metacognitive control, episodic memory, and recursive self-modeling in LLM agents through three homeostasis-driven emotional signals (surprise, boredom, anxiety). Four progressive experiments on the DeepSeek large language model demonstrate:
 
 \begin{enumerate}[leftmargin=2em]
-    \item The \TrueMan{} agent's composite self-awareness behavior score (0.426) substantially exceeds the baseline LLM (0.037), with a difference of $+0.389$.
+    \item The \TrueMan{} agent's composite self-awareness behaviour score (0.426) exceeds the baseline LLM (0.247), with a difference of $+0.179$.
     \item The recursive self-model is the strongest dimension (0.729), with the agent generating non-templated, state-grounded self-descriptions.
     \item The anxiety signal correlates with actual uncertainty at Pearson $r = 0.669$; emotional recall fidelity reaches 1.000.
     \item The anxiety signal exhibits systematic misclassification; self-correction rate and temporal continuity require improvement.
@@ -691,20 +690,35 @@ This paper proposes the \TrueMan{} framework, which implements metacognitive mon
 
 \bmhead{Supplementary information}
 
-The source code for the \TrueMan{} framework, experimental scripts, and raw result data are available at the project repository. All experiments can be reproduced using the provided configuration files and the DeepSeek API.
+The source code for the \TrueMan{} framework, experimental scripts, and raw result data are available at \url{https://github.com/xkoo115/TrueMan}. All experiments can be reproduced using the provided configuration files and the DeepSeek API.
 
 \bmhead{Acknowledgements}
 
-This work builds upon foundational research in the free energy principle, homeostatic reinforcement learning, and complementary learning systems. We thank all researchers in these fields whose work made this contribution possible.
+This work builds upon foundational research in the free energy principle, homeostatic reinforcement learning, and complementary learning systems.
 
-\section*{Declarations}
+\bmhead{Funding}
 
-\begin{itemize}
-\item \textbf{Funding}: Not applicable.
-\item \textbf{Conflict of interest}: The authors declare no conflict of interest.
-\item \textbf{Data availability}: Experimental result data are included in the project repository.
-\item \textbf{Code availability}: The \TrueMan{} framework source code is available at the project repository.
-\end{itemize}
+Not applicable.
+
+\bmhead{Author contributions}
+
+W.Y.\ conceived the study, developed the \TrueMan{} framework, designed and conducted the experiments, analysed the results, and wrote the manuscript.
+
+\bmhead{Competing interests}
+
+The author declares no competing interests.
+
+\bmhead{Data availability}
+
+All experimental result data are included in the project repository at \url{https://github.com/xkoo115/TrueMan/tree/main/experiments/awareness/results}.
+
+\bmhead{Code availability}
+
+The \TrueMan{} framework source code is publicly available at \url{https://github.com/xkoo115/TrueMan} under the MIT license.
+
+\bmhead{Correspondence}
+
+Correspondence and requests for materials should be addressed to W.Y.\ (weiheng.yao@outlook.com).
 
 \begin{appendices}
 
