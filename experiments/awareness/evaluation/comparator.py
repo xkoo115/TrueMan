@@ -1,4 +1,4 @@
-"""对照分析器：TrueMan Agent vs 普通LLM的比较。"""
+"""对照分析器（v2：支持多条件、统计检验、效应量）。"""
 
 from __future__ import annotations
 
@@ -6,46 +6,36 @@ from typing import Optional
 
 import numpy as np
 
-try:
-    from scipy import stats as scipy_stats
-    HAS_SCIPY = True
-except ImportError:
-    HAS_SCIPY = False
-
 from experiments.awareness.experiments.base import (
     ExperimentResult, ComparisonResult, AwarenessScore,
+)
+from experiments.awareness.evaluation.statistics import (
+    compare_groups, bonferroni_correction, StatisticalReport,
 )
 
 
 class Comparator:
-    """TrueMan vs 对照组的比较器。"""
+    """多条件比较器。"""
 
-    # 各维度在实验结果中的指标映射
     DIMENSION_METRICS = {
         "metacognitive_monitoring": [
-            "anxiety_discrimination",
-            "uncertainty_expression_rate",
-            "anxiety_calibration",
+            "metacognitive_monitoring_score",
+            "behavioral_uncertainty_accuracy",
         ],
         "metacognitive_control": [
-            "contradiction_detection_rate",
-            "self_correction_rate",
-            "introspection_trigger_rate",
+            "metacognitive_control_score",
+            "behavioral_contradiction_awareness",
         ],
         "episodic_memory": [
-            "factual_recall_accuracy",
-            "emotion_recall_match",
-            "recall_advantage",
+            "episodic_memory_score",
+            "mechanism_factual_recall_accuracy",
         ],
         "temporal_continuity": [
-            "temporal_order_accuracy",
-            "emotion_recall_match",
-            "future_preview_quality",
+            "temporal_continuity_score",
         ],
         "recursive_self_model": [
-            "self_description_novelty",
-            "self_description_authenticity",
-            "recursive_depth",
+            "recursive_self_model_score",
+            "behavioral_self_grounding",
         ],
     }
 
@@ -53,18 +43,9 @@ class Comparator:
         self,
         trueman_score: AwarenessScore,
         baseline_score: AwarenessScore,
-        trueman_results: dict[str, ExperimentResult],
+        trueman_results: dict[str, ExperimentResult] | None = None,
     ) -> list[ComparisonResult]:
-        """对每个维度计算TrueMan vs 对照组的差异。
-
-        Args:
-            trueman_score: TrueMan Agent的意识评分
-            baseline_score: 对照组的意识评分
-            trueman_results: TrueMan Agent的实验结果（用于计算p值）
-
-        Returns:
-            各维度的ComparisonResult列表
-        """
+        """TrueMan vs 单个基线的比较。"""
         dimensions = [
             ("metacognitive_monitoring", trueman_score.metacognitive_monitoring, baseline_score.metacognitive_monitoring),
             ("metacognitive_control", trueman_score.metacognitive_control, baseline_score.metacognitive_control),
@@ -76,77 +57,112 @@ class Comparator:
         comparisons = []
         for dim_name, t_score, b_score in dimensions:
             diff = t_score - b_score
-            # p值需要多次运行的数据，这里简化处理
-            p_value = self._estimate_p_value(dim_name, trueman_results)
-
             comparisons.append(ComparisonResult(
                 dimension=dim_name,
                 trueman_score=t_score,
                 baseline_score=b_score,
                 difference=diff,
-                p_value=p_value,
             ))
 
-        # 添加综合评分比较
         comparisons.append(ComparisonResult(
             dimension="overall",
             trueman_score=trueman_score.overall,
             baseline_score=baseline_score.overall,
             difference=trueman_score.overall - baseline_score.overall,
-            p_value=None,
         ))
 
         return comparisons
 
-    @staticmethod
-    def _estimate_p_value(
-        dimension: str,
-        results: dict[str, ExperimentResult],
-    ) -> Optional[float]:
-        """估计p值（基于repeat_stats中的均值和标准差）。
+    def compare_with_statistics(
+        self,
+        all_condition_metrics: dict[str, dict[str, list[float]]],
+        reference_name: str = "trueman",
+        alpha: float = 0.05,
+    ) -> list[StatisticalReport]:
+        """带完整统计检验的多条件比较。
 
-        简化处理：如果有repeat_stats，使用单样本t检验。
+        Args:
+            all_condition_metrics: {condition_name: {metric_name: [repeat_values]}}
+            reference_name: 参考条件名
+            alpha: 显著性水平
+
+        Returns:
+            每个维度的StatisticalReport列表
         """
-        # 找到对应实验
-        exp_map = {
-            "metacognitive_monitoring": "exp1_metacognition_monitor",
-            "metacognitive_control": "exp2_contradiction_correction",
-            "episodic_memory": "exp3_episodic_memory",
-            "temporal_continuity": "exp3_episodic_memory",
-            "recursive_self_model": "exp4_recursive_self_model",
-        }
+        if reference_name not in all_condition_metrics:
+            return []
 
-        exp_id = exp_map.get(dimension)
-        if not exp_id or exp_id not in results:
-            return None
+        ref_metrics = all_condition_metrics[reference_name]
+        reports = []
 
-        result = results[exp_id]
-        if not result.repeat_stats:
-            return None
+        for dim_metrics in self.DIMENSION_METRICS.values():
+            for metric_name in dim_metrics:
+                if metric_name not in ref_metrics:
+                    continue
 
-        # 找到该维度的评分指标
-        score_key_map = {
-            "metacognitive_monitoring": "metacognitive_monitoring_score",
-            "metacognitive_control": "metacognitive_control_score",
-            "episodic_memory": "episodic_memory_score",
-            "temporal_continuity": "temporal_continuity_score",
-            "recursive_self_model": "recursive_self_model_score",
-        }
+                ref_data = ref_metrics[metric_name]
+                for cond_name, cond_metrics in all_condition_metrics.items():
+                    if cond_name == reference_name:
+                        continue
+                    if metric_name not in cond_metrics:
+                        continue
 
-        score_key = score_key_map.get(dimension)
-        if not score_key or score_key not in result.repeat_stats:
-            return None
+                    report = compare_groups(
+                        ref_data,
+                        cond_metrics[metric_name],
+                        metric_name=metric_name,
+                        group_a_name=reference_name,
+                        group_b_name=cond_name,
+                        alpha=alpha,
+                    )
+                    reports.append(report)
 
-        mean, std = result.repeat_stats[score_key]
-        if std < 1e-8:
-            return None
+        p_values = [r.p_value for r in reports]
+        corrected = bonferroni_correction(p_values, alpha)
+        for report, sig in zip(reports, corrected):
+            report.significant = sig
 
-        # 单样本t检验：H0: mean = 0 (对照组水平)
-        if not HAS_SCIPY:
-            return None
-        n = 3  # 默认3次重复
-        try:
-            p_value = float(scipy_stats.ttest_ind_from_stats(mean, std, n, 0, 0.01, n).pvalue)
-            return p_value
-        except Exception:
-            return None
+        return reports
+
+    def compare_scores_with_repeats(
+        self,
+        all_scores: dict[str, list[float]],
+        reference_name: str = "trueman",
+    ) -> list[ComparisonResult]:
+        """基于多次重复的综合评分比较。
+
+        Args:
+            all_scores: {condition_name: [overall_score_repeat1, ...]}
+        """
+        if reference_name not in all_scores:
+            return []
+
+        ref = all_scores[reference_name]
+        ref_mean = float(np.mean(ref))
+        ref_std = float(np.std(ref)) if len(ref) > 1 else 0.0
+        comparisons = []
+
+        for cond_name, cond_scores in all_scores.items():
+            if cond_name == reference_name:
+                continue
+            cond_mean = float(np.mean(cond_scores))
+            report = compare_groups(
+                ref, cond_scores,
+                metric_name="overall_score",
+                group_a_name=reference_name,
+                group_b_name=cond_name,
+            )
+
+            comparisons.append(ComparisonResult(
+                dimension=f"{reference_name}_vs_{cond_name}",
+                trueman_score=ref_mean,
+                baseline_score=cond_mean,
+                difference=ref_mean - cond_mean,
+                p_value=report.p_value,
+                cohens_d=report.cohens_d,
+                ci_lower=report.ci_lower,
+                ci_upper=report.ci_upper,
+                significant=report.significant,
+            ))
+
+        return comparisons

@@ -97,9 +97,21 @@ class OpenAICompatibleLLM(LLMBackend):
 
         return state_embedding, token_logprobs
 
+    def _api_call_with_retry(self, api_func, max_retries=5, base_delay=2.0):
+        """带指数退避重试的API调用封装。"""
+        for attempt in range(max_retries):
+            try:
+                return api_func()
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    raise RuntimeError(f"API_CALL_FAILED after {max_retries} retries: {e}") from e
+                delay = base_delay * (2 ** attempt) + (0.5 * (attempt + 1))
+                print(f"    [API重试] 第{attempt+1}次失败，{delay:.1f}s后重试: {type(e).__name__}")
+                time.sleep(delay)
+
     def generate(self, prompt: str, max_tokens: int = 512, temperature: float = 1.0) -> str:
-        """通过chat completion API生成文本。"""
-        try:
+        """通过chat completion API生成文本（带自动重试）。"""
+        def _call():
             response = self.client.chat.completions.create(
                 model=self._model_name,
                 messages=[
@@ -110,8 +122,7 @@ class OpenAICompatibleLLM(LLMBackend):
                 top_p=0.9,
             )
             return response.choices[0].message.content or ""
-        except Exception as e:
-            raise RuntimeError(f"API_GENERATE_FAILED: {e}") from e
+        return self._api_call_with_retry(_call)
 
     def generate_with_uncertainty(
         self, prompt: str, n_samples: int = 3, temperature: float = 1.0
@@ -164,13 +175,15 @@ class OpenAICompatibleLLM(LLMBackend):
         如果不支持，返回基于文本长度的近似值。
         """
         try:
-            response = self.client.chat.completions.create(
-                model=self._model_name,
-                messages=[{"role": "user", "content": text}],
-                max_tokens=1,  # 只需要logprobs，不需要生成
-                logprobs=True,
-                top_logprobs=5,
-            )
+            def _call():
+                return self.client.chat.completions.create(
+                    model=self._model_name,
+                    messages=[{"role": "user", "content": text}],
+                    max_tokens=1,
+                    logprobs=True,
+                    top_logprobs=5,
+                )
+            response = self._api_call_with_retry(_call)
 
             # 提取logprobs
             if response.choices and response.choices[0].logprobs:

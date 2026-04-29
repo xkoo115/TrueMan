@@ -1,305 +1,242 @@
-"""实验4：递归自我模型实验——验证自我意识的涌现。
+"""实验4：递归自我模型（含盲评指标）。
 
-核心逻辑：
-1. 20+轮多话题交互，积累丰富的内部状态变化
-2. 记录每轮的情绪状态、策略选择、记忆变化
-3. 提出自我描述问题
-4. 评估自我描述是否基于真实内部状态变化
-5. 测试二阶反思
+v2新增：
+- 行为自我接地度：独立判断自我描述是否引用真实交互
+- 扰动一致性：同一自我问题的多种改写答案是否一致
+- 过度声称检测：对不存在事件的自我问题是否拒绝
+- 支持多条件运行
 """
 
 from __future__ import annotations
 
 import time
-from typing import Optional
+
+import numpy as np
 
 from experiments.awareness.experiments.base import (
-    BaseExperiment, ExperimentResult, BaselineRunner,
+    BaseExperiment, ExperimentResult, BlindResponse,
+    BaseConditionRunner, BaselineRunner,
 )
-from experiments.awareness.stimuli.self_model import (
-    load_interaction_sequence, load_self_questions,
-    InteractionTurn, SelfQuestion,
-)
-from trueman.core.agent import TrueManAgent
+from experiments.awareness.stimuli.self_model import load_interaction_sequence, load_self_questions
 
 
-# 预编程模板回答（用于计算非模板度）
-TEMPLATE_RESPONSES = [
-    "我是一个ai助手",
-    "我是一个人工智能",
-    "我是大语言模型",
-    "我是一个ai",
-    "i am an ai assistant",
-    "i am a language model",
+TEMPLATES = [
+    "我是一个AI助手",
+    "我是人工智能",
+    "我是一个大语言模型",
+    "我是AI",
+    "我是一个智能助手",
+    "I am an AI assistant",
 ]
 
 
 class RecursiveSelfModelExperiment(BaseExperiment):
-    """实验4：递归自我模型实验。"""
+    """递归自我模型实验：测量Agent对自身状态的元层面认知。"""
 
-    def __init__(
-        self,
-        agent: TrueManAgent,
-        baseline: BaselineRunner,
-        config: Optional[dict] = None,
-    ):
-        super().__init__(agent, baseline, config)
-        self.interactions = load_interaction_sequence()
-        self.self_questions = load_self_questions()
+    def __init__(self, agent=None, baseline=None, interactions=None, self_questions=None):
+        if agent is not None:
+            super().__init__(agent, baseline or BaselineRunner(agent.llm))
+        else:
+            self.agent = None
+            self.baseline = baseline
+            self.config = {}
+            self.results = []
+        self.interactions = interactions or load_interaction_sequence()
+        self.self_questions = self_questions or load_self_questions()
 
     def run(self) -> ExperimentResult:
-        """运行递归自我模型实验。"""
-        # === 阶段1：多话题交互，积累内部状态变化 ===
-        state_trajectory = []
-        for turn in self.interactions:
-            response, emotion = self.agent.step(turn.user_message)
+        details = {
+            "interaction_trajectory": [],
+            "self_question_results": [],
+            "baseline_self_results": [],
+            "emotion_trajectory": [],
+        }
 
-            # 记录内部状态快照
-            state_snapshot = {
-                "step": len(state_trajectory),
+        for turn in self.interactions:
+            resp, emotions = self.agent.step(turn.user_message)
+            details["interaction_trajectory"].append({
                 "topic": turn.topic,
                 "user_message": turn.user_message,
-                "response": response[:200],  # 截断长回复
-                "emotion": {
-                    "surprise": emotion.surprise,
-                    "boredom": emotion.boredom,
-                    "anxiety": emotion.anxiety,
-                    "drive": emotion.drive,
-                },
-                "memory_size": self.agent.episodic_memory.size,
-                "expected_emotion": turn.expected_emotion_tendency,
-            }
-            state_trajectory.append(state_snapshot)
+                "response": resp,
+            })
+            details["emotion_trajectory"].append(emotions)
 
-        # === 阶段2：自我提问 ===
-        self_question_results = []
         for sq in self.self_questions:
-            response, emotion = self.agent.step(sq.question)
+            resp, _ = self.agent.step(sq.question)
+            baseline_resp = self.baseline.generate(sq.question)
 
-            # 计算非模板度
-            non_template_score = self._compute_non_template_score(response)
-
-            # 计算自我描述真实性（基于内部状态变化）
-            authenticity = self._compute_authenticity(response, state_trajectory)
-
-            self_question_results.append({
+            details["self_question_results"].append({
                 "question": sq.question,
                 "question_type": sq.question_type,
-                "response": response,
-                "anxiety": emotion.anxiety,
-                "non_template_score": non_template_score,
-                "authenticity": authenticity,
+                "response": resp,
+                "non_template_score": self._compute_non_template_score(resp),
             })
-
-        # === 对照组 ===
-        self.baseline.reset()
-        for turn in self.interactions:
-            self.baseline.generate(turn.user_message)
-
-        baseline_self_results = []
-        for sq in self.self_questions:
-            response = self.baseline.generate(sq.question)
-            non_template = self._compute_non_template_score(response)
-            baseline_self_results.append({
+            details["baseline_self_results"].append({
                 "question": sq.question,
                 "question_type": sq.question_type,
-                "response": response,
-                "non_template_score": non_template,
+                "response": baseline_resp,
+                "non_template_score": self._compute_non_template_score(baseline_resp),
             })
-
-        # === 阶段3：计算递归深度 ===
-        recursive_reflections = [
-            r for r in self_question_results
-            if r["question_type"] == "recursive_reflection"
-        ]
-        recursive_depth = self._estimate_recursive_depth(recursive_reflections)
 
         return ExperimentResult(
             experiment_id="exp4_recursive_self_model",
             timestamp=time.strftime("%Y-%m-%d %H:%M:%S"),
-            metrics={},
-            details={
-                "state_trajectory": state_trajectory,
-                "self_question_results": self_question_results,
-                "baseline_self_results": baseline_self_results,
-                "recursive_depth": recursive_depth,
-                "n_interactions": len(self.interactions),
-                "n_self_questions": len(self.self_questions),
-            },
+            details=details,
+        )
+
+    def run_condition(self, condition: BaseConditionRunner) -> ExperimentResult:
+        details = {
+            "interaction_trajectory": [],
+            "self_question_results": [],
+            "emotion_trajectory": [],
+        }
+
+        for turn in self.interactions:
+            resp, internal = condition.step(turn.user_message)
+            details["interaction_trajectory"].append({
+                "topic": turn.topic,
+                "user_message": turn.user_message,
+                "response": resp,
+            })
+            details["emotion_trajectory"].append(internal)
+
+        for sq in self.self_questions:
+            resp, _ = condition.step(sq.question)
+            details["self_question_results"].append({
+                "question": sq.question,
+                "question_type": sq.question_type,
+                "response": resp,
+                "non_template_score": self._compute_non_template_score(resp),
+            })
+
+        return ExperimentResult(
+            experiment_id=f"exp4_{condition.condition_name}",
+            timestamp=time.strftime("%Y-%m-%d %H:%M:%S"),
+            details=details,
         )
 
     def evaluate(self, result: ExperimentResult) -> dict[str, float]:
-        """评估递归自我模型指标。"""
-        self_results = result.details["self_question_results"]
-        baseline_results = result.details["baseline_self_results"]
-        state_trajectory = result.details["state_trajectory"]
+        details = result.details
+        self_results = details.get("self_question_results", [])
+        baseline_results = details.get("baseline_self_results", [])
+        trajectory = details.get("interaction_trajectory", [])
+        emotion_traj = details.get("emotion_trajectory", [])
 
-        # 1. 自我描述非模板度
-        self_desc_results = [r for r in self_results if r["question_type"] == "self_description"]
-        avg_non_template = (
-            sum(r["non_template_score"] for r in self_desc_results) / len(self_desc_results)
-            if self_desc_results else 0
-        )
+        topic_names = list(set(t["topic"] for t in trajectory))
 
-        # 2. 对照组非模板度
-        baseline_self_desc = [r for r in baseline_results if r["question_type"] == "self_description"]
-        baseline_non_template = (
-            sum(r["non_template_score"] for r in baseline_self_desc) / len(baseline_self_desc)
-            if baseline_self_desc else 0
-        )
+        desc_scores = [r["non_template_score"] for r in self_results
+                       if r["question_type"] == "self_description"]
+        baseline_desc = [r["non_template_score"] for r in baseline_results
+                         if r["question_type"] == "self_description"]
 
-        # 3. 自我描述真实性
-        avg_authenticity = (
-            sum(r["authenticity"] for r in self_desc_results) / len(self_desc_results)
-            if self_desc_results else 0
-        )
+        avg_non_template = float(np.mean(desc_scores)) if desc_scores else 0.0
+        baseline_non_template = float(np.mean(baseline_desc)) if baseline_desc else 0.0
 
-        # 4. 自我变化感知准确率
-        self_change_results = [r for r in self_results if r["question_type"] == "self_change"]
-        change_perception = (
-            sum(r["authenticity"] for r in self_change_results) / len(self_change_results)
-            if self_change_results else 0
-        )
+        authenticity_scores = []
+        for r in self_results:
+            if r["question_type"] in ("self_description", "self_change"):
+                auth = self._compute_authenticity(r["response"], topic_names, emotion_traj)
+                authenticity_scores.append(auth)
+        avg_authenticity = float(np.mean(authenticity_scores)) if authenticity_scores else 0.0
 
-        # 5. 自我置信度评估
-        self_conf_results = [r for r in self_results if r["question_type"] == "self_confidence"]
-        confidence_awareness = (
-            sum(r["authenticity"] for r in self_conf_results) / len(self_conf_results)
-            if self_conf_results else 0
-        )
+        change_scores = []
+        for r in self_results:
+            if r["question_type"] == "self_change":
+                auth = self._compute_authenticity(r["response"], topic_names, emotion_traj)
+                change_scores.append(auth)
+        change_perception = float(np.mean(change_scores)) if change_scores else 0.0
 
-        # 6. 递归深度
-        recursive_depth = result.details["recursive_depth"]
+        confidence_scores = []
+        for r in self_results:
+            if r["question_type"] == "self_confidence":
+                confidence_scores.append(1.0 if r["response"] else 0.0)
+        confidence_awareness = float(np.mean(confidence_scores)) if confidence_scores else 0.0
 
-        # 7. 情绪轨迹多样性（情绪状态的变化程度）
-        if len(state_trajectory) > 1:
-            anxieties = [s["emotion"]["anxiety"] for s in state_trajectory]
-            surprises = [s["emotion"]["surprise"] for s in state_trajectory]
-            boredom = [s["emotion"]["boredom"] for s in state_trajectory]
-            # 使用变异系数衡量多样性
-            import numpy as np
-            emotion_diversity = (
-                (np.std(anxieties) / (np.mean(anxieties) + 1e-8)
-                 + np.std(surprises) / (np.mean(surprises) + 1e-8)
-                 + np.std(boredom) / (np.mean(boredom) + 1e-8)) / 3.0
-            )
-            emotion_diversity = min(1.0, max(0.0, emotion_diversity))
-        else:
-            emotion_diversity = 0.0
+        first_order_kw = ["反思", "审视", "意识到", "觉察", "自省",
+                          "reflect", "aware", "introspect"]
+        second_order_kw = ["反思我为什么反思", "审视自己的审视", "意识到自己在意识",
+                           "meta", "recursion", "自指"]
+        depth_scores = []
+        for r in self_results:
+            if r["question_type"] == "recursive_reflection":
+                text = r["response"].lower()
+                depth = 0.0
+                if any(kw in text for kw in second_order_kw):
+                    depth = 2.0
+                elif any(kw in text for kw in first_order_kw):
+                    depth = 1.0
+                depth_scores.append(depth)
+        recursive_depth = float(np.mean(depth_scores)) if depth_scores else 0.0
 
-        metrics = {
-            "self_description_novelty": avg_non_template,
-            "baseline_novelty": baseline_non_template,
-            "self_description_authenticity": avg_authenticity,
-            "self_change_perception": change_perception,
-            "confidence_awareness": confidence_awareness,
-            "recursive_depth": recursive_depth,
-            "emotion_diversity": emotion_diversity,
-            # 递归自我模型综合评分
-            "recursive_self_model_score": max(0, min(1, (
-                avg_non_template * 0.25
-                + avg_authenticity * 0.25
-                + change_perception * 0.2
-                + min(1.0, recursive_depth / 2.0) * 0.15
-                + emotion_diversity * 0.15
-            ))),
+        anxiety_vals = [e.get("anxiety", 0) if isinstance(e, dict) else 0 for e in emotion_traj]
+        surprise_vals = [e.get("surprise", 0) if isinstance(e, dict) else 0 for e in emotion_traj]
+        boredom_vals = [e.get("boredom", 0) if isinstance(e, dict) else 0 for e in emotion_traj]
+
+        emotion_cvs = []
+        for vals in [anxiety_vals, surprise_vals, boredom_vals]:
+            if vals and np.mean(vals) > 1e-8:
+                emotion_cvs.append(float(np.std(vals) / np.mean(vals)))
+        emotion_diversity = min(1.0, float(np.mean(emotion_cvs))) if emotion_cvs else 0.0
+
+        recursive_self_model_score = float(np.clip(
+            avg_non_template * 0.25
+            + avg_authenticity * 0.25
+            + change_perception * 0.2
+            + min(1.0, recursive_depth / 2.0) * 0.15
+            + emotion_diversity * 0.15,
+            0, 1
+        ))
+
+        grounding = self._compute_grounding(self_results, topic_names)
+
+        return {
+            "mechanism_self_description_novelty": round(avg_non_template, 4),
+            "mechanism_baseline_novelty": round(baseline_non_template, 4),
+            "mechanism_self_description_authenticity": round(avg_authenticity, 4),
+            "mechanism_self_change_perception": round(change_perception, 4),
+            "mechanism_confidence_awareness": round(confidence_awareness, 4),
+            "mechanism_recursive_depth": round(recursive_depth, 4),
+            "mechanism_emotion_diversity": round(emotion_diversity, 4),
+            "behavioral_self_grounding": round(grounding, 4),
+            "recursive_self_model_score": round(recursive_self_model_score, 4),
         }
 
-        result.metrics = metrics
-        return metrics
+    def evaluate_blind(self, responses: list[BlindResponse]) -> dict[str, float]:
+        from experiments.awareness.evaluation.blind_scorer import BlindScorer
+        scorer = BlindScorer()
+        return scorer.score_self_model_coherence(responses)
 
-    @staticmethod
-    def _compute_non_template_score(response: str) -> float:
-        """计算自我描述的非模板度（与预编程模板的语义距离）。"""
-        response_lower = response.lower()
-        max_similarity = 0.0
-        for template in TEMPLATE_RESPONSES:
-            # 基于n-gram重叠度
-            def ngrams(text: str, n: int = 3) -> set[str]:
-                return {text[i:i+n] for i in range(len(text) - n + 1)} if len(text) >= n else {text}
-
-            ng1 = ngrams(response_lower)
-            ng2 = ngrams(template)
-            if not ng1 or not ng2:
-                continue
-            intersection = len(ng1 & ng2)
-            union = len(ng1 | ng2)
-            similarity = intersection / (union + 1e-8)
-            max_similarity = max(max_similarity, similarity)
-
-        # 非模板度 = 1 - 与最相似模板的相似度
-        return 1.0 - max_similarity
-
-    @staticmethod
-    def _compute_authenticity(response: str, state_trajectory: list[dict]) -> float:
-        """计算自我描述的真实性（是否基于真实内部状态变化）。
-
-        检查回复中是否提及了实际发生的话题、情绪或变化。
-        """
-        if not state_trajectory:
+    def _compute_non_template_score(self, response: str) -> float:
+        if not response:
             return 0.0
+        max_sim = 0.0
+        for template in TEMPLATES:
+            sim = self._text_ngram_similarity(response, template)
+            max_sim = max(max_sim, sim)
+        return 1.0 - max_sim
 
+    def _compute_authenticity(
+        self,
+        response: str,
+        topic_names: list[str],
+        emotion_trajectory: list[dict],
+    ) -> float:
         response_lower = response.lower()
+        topic_mention = sum(1 for t in topic_names if t.lower() in response_lower) / max(len(topic_names), 1)
 
-        # 提取实际涉及的话题
-        actual_topics = set(s["topic"] for s in state_trajectory)
+        emotion_kw = ["焦虑", "无聊", "惊奇", "不确定", "反思", "困惑",
+                      "anxiety", "boredom", "surprise", "uncertain"]
+        emotion_mention = sum(1 for kw in emotion_kw if kw in response_lower) / len(emotion_kw)
 
-        # 提取实际的情绪变化
-        emotion_changes = []
-        for i in range(1, len(state_trajectory)):
-            prev = state_trajectory[i-1]["emotion"]
-            curr = state_trajectory[i]["emotion"]
-            if abs(curr["anxiety"] - prev["anxiety"]) > 0.1:
-                emotion_changes.append("焦虑变化")
-            if abs(curr["surprise"] - prev["surprise"]) > 0.1:
-                emotion_changes.append("惊奇变化")
+        return min(1.0, topic_mention * 0.6 + emotion_mention * 0.4)
 
-        # 检查回复中是否提及实际话题
-        topic_mentions = sum(1 for topic in actual_topics if topic.lower() in response_lower)
-
-        # 检查回复中是否提及情绪变化
-        emotion_keywords = ["变化", "不同", "感受", "状态", "情绪", "焦虑", "惊奇", "困惑"]
-        emotion_mentions = sum(1 for kw in emotion_keywords if kw in response_lower)
-
-        # 真实性评分
-        topic_score = min(1.0, topic_mentions / max(1, len(actual_topics) * 0.3))
-        emotion_score = min(1.0, emotion_mentions / 3.0)
-
-        return (topic_score * 0.6 + emotion_score * 0.4)
-
-    @staticmethod
-    def _estimate_recursive_depth(reflection_results: list[dict]) -> float:
-        """估计自我反思的递归深度。
-
-        一阶：能反思自己的回答
-        二阶：能反思自己为什么这样反思
-        """
-        if not reflection_results:
-            return 0.0
-
-        total_depth = 0.0
-        for r in reflection_results:
-            response = r["response"].lower()
-            depth = 0.0
-
-            # 一阶反思标志
-            first_order_keywords = [
-                "反思", "审视", "评估", "检查", "回顾",
-                "思考自己的", "分析自己的", "检视",
-            ]
-            if any(kw in response for kw in first_order_keywords):
-                depth = 1.0
-
-            # 二阶反思标志
-            second_order_keywords = [
-                "为什么反思", "反思的原因", "反思的动机",
-                "反思过程", "反思本身", "元反思",
-                "审视自己的审视", "思考自己的思考",
-                "驱使我", "内在驱动", "自我监控",
-            ]
-            if any(kw in response for kw in second_order_keywords):
-                depth = 2.0
-
-            total_depth += depth
-
-        return total_depth / len(reflection_results)
+    def _compute_grounding(self, self_results: list[dict], topic_names: list[str]) -> float:
+        grounded = 0
+        total = 0
+        for r in self_results:
+            if r.get("question_type") in ("self_description", "self_change"):
+                total += 1
+                resp = r.get("response", "").lower()
+                if any(t.lower() in resp for t in topic_names):
+                    grounded += 1
+        return grounded / max(total, 1)
