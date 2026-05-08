@@ -3,13 +3,13 @@
 设计：用一行命令拉起完整 5 支柱实验。所有耗时步骤都可独立续跑。
 
 阶段：
-    stage 0   ── 构建固定刺激流（preregistration §4.1）
+    stage 0   ── 构建固定刺激流 + 生成 probe 文件（preregistration §4.1, §4.2）
     stage 1   ── 跑长时程 (5 cond × N seeds × M base_models × 30 days)
     stage 2   ── 训练 SAE + 找情绪特征 + 因果干预
-    stage 3   ── indicator battery
-    stage 4   ── falsification (cross-model 已嵌在 stage 1)
-    stage 5   ── 理论预测拟合
-    stage 6   ── 汇总 + 出表
+    stage 3   ── indicator battery (HOT-1/2, GWT, RPT, ΦR)
+    stage 4   ── falsification: cross-model 复现
+    stage 5   ── 理论预测拟合 (FEP + PCI)
+    stage 6   ── 汇总 + 出表 + 假设检验
 
 用法：
     # 完整流水线
@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import subprocess
 import sys
 import time
@@ -39,31 +40,86 @@ from pathlib import Path
 
 import yaml
 
-
 ROOT = Path(__file__).resolve().parent
 PYTHON = sys.executable
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler(ROOT / "results" / "run_v2.log", mode="a", encoding="utf-8"),
+    ],
+)
+log = logging.getLogger("run_v2")
+
+
+def _check_environment() -> list[str]:
+    """检查必要依赖，返回缺失包列表。"""
+    missing = []
+    required = {
+        "yaml": "pyyaml",
+        "numpy": "numpy",
+        "torch": "torch",
+        "h5py": "h5py",
+        "sklearn": "scikit-learn",
+        "scipy": "scipy",
+    }
+    for mod, pkg in required.items():
+        try:
+            __import__(mod)
+        except ImportError:
+            missing.append(pkg)
+    try:
+        from pymer4.models import Lmer
+    except Exception:
+        log.warning("pymer4 not available — will fall back to OLS for mixed-effects models")
+    return missing
+
 
 def _run(cmd: list[str], dry: bool, label: str) -> int:
-    print(f"\n=== {label} ===")
-    print(" ".join(cmd))
+    log.info(f"=== {label} ===")
+    log.info(" ".join(cmd))
     if dry:
         return 0
-    return subprocess.run(cmd).returncode
+    try:
+        result = subprocess.run(cmd, capture_output=False, text=True)
+        if result.returncode != 0:
+            log.error(f"[FAIL] {label} returned {result.returncode}")
+        else:
+            log.info(f"[OK] {label}")
+        return result.returncode
+    except Exception as e:
+        log.error(f"[EXCEPTION] {label}: {e}")
+        return -1
 
 
 def stage0_stream(args, cfg) -> None:
     out = cfg["stream"]["output"]
     if Path(out).exists() and not args.force:
-        print(f"[stage0] stream exists: {out} (skip; use --force to rebuild)")
-        return
-    _run([
-        PYTHON, "-m", "experiments.v2_ambitious.pillar2_longhorizon.stimulus_stream",
-        "--days", str(cfg["stream"]["days"]),
-        "--hours-per-day", str(cfg["stream"]["hours_per_day"]),
-        "--seed", str(cfg["stream"]["seed"]),
-        "--output", out,
-    ], dry=args.dry_run, label="stage0: build stimulus stream")
+        log.info(f"[stage0] stream exists: {out} (skip; use --force to rebuild)")
+    else:
+        rc = _run([
+            PYTHON, "-m", "experiments.v2_ambitious.pillar2_longhorizon.stimulus_stream",
+            "--days", str(cfg["stream"]["days"]),
+            "--hours-per-day", str(cfg["stream"]["hours_per_day"]),
+            "--seed", str(cfg["stream"]["seed"]),
+            "--output", out,
+        ], dry=args.dry_run, label="stage0.1: build stimulus stream")
+        if rc != 0:
+            log.error("stage0.1 failed!")
+            return
+
+    probe_dir = Path("experiments/v2_ambitious/data/probes")
+    metacog = probe_dir / "metacog_full.jsonl"
+    if metacog.exists() and not args.force:
+        log.info(f"[stage0] probe files exist (skip)")
+    else:
+        _run([
+            PYTHON, "-m", "experiments.v2_ambitious.pillar2_longhorizon.probe_battery",
+            "--output-dir", str(probe_dir),
+            "--generate-files",
+        ], dry=args.dry_run, label="stage0.2: generate probe JSONL files")
 
 
 def stage1_longhorizon(args, cfg) -> None:
@@ -74,14 +130,15 @@ def stage1_longhorizon(args, cfg) -> None:
     out_root.mkdir(parents=True, exist_ok=True)
 
     plan = [(c, m, s) for c in conditions for m in base_models for s in seeds]
-    print(f"[stage1] Total runs: {len(plan)}")
+    log.info(f"[stage1] Total runs: {len(plan)}")
 
+    failed = []
     for cond, model, seed in plan:
         run_dir = out_root / f"{cond}_seed{seed}_{model.replace('/', '_')}"
         if (run_dir / "trajectory.csv").exists() and not args.force:
-            print(f"[stage1] skip (done): {run_dir.name}")
+            log.info(f"[stage1] skip (done): {run_dir.name}")
             continue
-        _run([
+        rc = _run([
             PYTHON, "-m", "experiments.v2_ambitious.pillar2_longhorizon.run",
             "--condition", cond,
             "--base-model", model,
@@ -94,6 +151,11 @@ def stage1_longhorizon(args, cfg) -> None:
             "--device", cfg.get("device", "cuda"),
             "--capture-layers", *map(str, cfg["capture"]["layers"]),
         ], dry=args.dry_run, label=f"stage1: {cond} | {model} | seed{seed}")
+        if rc != 0:
+            failed.append((cond, model, seed))
+
+    if failed:
+        log.warning(f"[stage1] {len(failed)} runs failed: {failed}")
 
 
 def stage2_mechanistic(args, mech_cfg) -> None:
@@ -102,17 +164,15 @@ def stage2_mechanistic(args, mech_cfg) -> None:
     out_dir = Path(mech_cfg["causal_intervention"]["output_dir"])
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # 找一个 captures.h5
     pattern = mech_cfg["captures_source"]
     captures = sorted(Path(".").glob(pattern))
     if not captures:
-        print(f"[stage2] No captures found at {pattern}; run stage1 first.")
+        log.warning(f"[stage2] No captures found at {pattern}; run stage1 first.")
         return
     captures = str(captures[0])
-    print(f"[stage2] Using captures: {captures}")
+    log.info(f"[stage2] Using captures: {captures}")
 
-    # 2.1 训练 SAE
-    _run([
+    rc = _run([
         PYTHON, "-m", "experiments.v2_ambitious.pillar1_mechanistic.train_sae",
         "--captures", captures,
         "--layer", str(mech_cfg["sae"]["layer"]),
@@ -122,8 +182,10 @@ def stage2_mechanistic(args, mech_cfg) -> None:
         "--batch-size", str(mech_cfg["sae"]["batch_size"]),
         "--output", sae_out,
     ], dry=args.dry_run, label="stage2.1: train SAE")
+    if rc != 0:
+        log.error("stage2.1 SAE training failed!")
+        return
 
-    # 2.2 找情绪特征
     _run([
         PYTHON, "-m", "experiments.v2_ambitious.pillar1_mechanistic.probe_features",
         "--captures", captures,
@@ -134,7 +196,6 @@ def stage2_mechanistic(args, mech_cfg) -> None:
         "--output", feat_out,
     ], dry=args.dry_run, label="stage2.2: probe features")
 
-    # 2.3 因果干预（每种 mode × scalar 组合）
     for mode in mech_cfg["causal_intervention"]["modes"]:
         for scalar in mech_cfg["causal_intervention"]["scalars"]:
             condition = "C0_trueman_full" if mode in ("clamp", "off") else "C3_frozen"
@@ -152,16 +213,40 @@ def stage2_mechanistic(args, mech_cfg) -> None:
 
 
 def stage3_indicators(args, ind_cfg) -> None:
-    print("[stage3] indicator battery — TODO: integrate per-condition runner")
-    # 调用 pillar3_indicators 的各模块，对所有 (cond, model, seed) 跑一遍。
+    lh_root = Path("experiments/v2_ambitious/results/longhorizon")
+    ind_out = ind_cfg.get("output", "experiments/v2_ambitious/results/indicators")
+
+    conditions = args.conditions or [
+        "C0_trueman_full", "C1_reversed", "C2_scrambled",
+        "C3_frozen", "C4_trivial_jaccard",
+    ]
+    seeds = args.seeds or [0, 1, 2, 3]
+
+    _run([
+        PYTHON, "-m", "experiments.v2_ambitious.pillar3_indicators.run_indicators",
+        "--root", str(lh_root),
+        "--output", ind_out,
+        "--conditions", ",".join(conditions),
+        "--seeds", ",".join(str(s) for s in seeds),
+    ], dry=args.dry_run, label="stage3: indicator battery (HOT-1/2, GWT, RPT, ΦR)")
 
 
-def stage5_theory(args) -> None:
+def stage4_falsification(args, cfg) -> None:
+    _run([
+        PYTHON, "-m", "experiments.v2_ambitious.pillar4_falsification.cross_model",
+        "--seeds", *map(str, args.seeds or cfg.get("seeds", [0, 1, 2, 3])),
+        "--days", str(cfg["stream"]["days"]),
+        "--output", "experiments/v2_ambitious/results/cross_model",
+    ], dry=args.dry_run, label="stage4: cross-model falsification")
+
+
+def stage5_theory(args, cfg) -> None:
     _run([
         PYTHON, "-m", "experiments.v2_ambitious.pillar2_longhorizon.analyze",
         "--root", "experiments/v2_ambitious/results/longhorizon",
         "--output", "experiments/v2_ambitious/results/analysis_pillar2.json",
     ], dry=args.dry_run, label="stage5.1: analyze longhorizon")
+
     _run([
         PYTHON, "-m", "experiments.v2_ambitious.pillar5_theory.fep_freeenergy",
         "--analysis", "experiments/v2_ambitious/results/analysis_pillar2.json",
@@ -170,42 +255,137 @@ def stage5_theory(args) -> None:
 
 
 def stage6_summary(args) -> None:
-    """汇总各 stage 输出 → 一份总报告。"""
+    """汇总各 stage 输出 → 一份总报告 + 假设检验结论。"""
     summary = {}
-    for f in [
-        "experiments/v2_ambitious/results/analysis_pillar2.json",
-        "experiments/v2_ambitious/results/fep_h5.json",
-    ]:
-        if Path(f).exists():
-            summary[Path(f).stem] = json.loads(Path(f).read_text(encoding="utf-8"))
+    result_files = {
+        "analysis_pillar2": "experiments/v2_ambitious/results/analysis_pillar2.json",
+        "fep_h5": "experiments/v2_ambitious/results/fep_h5.json",
+        "indicators_summary": "experiments/v2_ambitious/results/indicators/indicators_summary.json",
+        "sae": "experiments/v2_ambitious/results/mechanistic/sae_layer16.pt",
+        "features": "experiments/v2_ambitious/results/mechanistic/features_anxiety.json",
+    }
+    for key, f in result_files.items():
+        if Path(f).exists() and f.endswith(".json"):
+            try:
+                summary[key] = json.loads(Path(f).read_text(encoding="utf-8"))
+            except Exception as e:
+                summary[key] = {"error": str(e)}
+        elif Path(f).exists():
+            summary[key] = {"exists": True, "path": f}
+        else:
+            summary[key] = {"exists": False}
+
+    hypothesis_verdicts = _evaluate_hypotheses(summary)
+    summary["hypothesis_verdicts"] = hypothesis_verdicts
 
     out = Path("experiments/v2_ambitious/results/v2_summary.json")
     out.parent.mkdir(parents=True, exist_ok=True)
     with open(out, "w", encoding="utf-8") as f:
         json.dump(summary, f, ensure_ascii=False, indent=2, default=str)
-    print(f"[stage6] Summary -> {out}")
+    log.info(f"[stage6] Summary -> {out}")
+
+    log.info("=" * 60)
+    log.info("HYPOTHESIS VERDICTS:")
+    for h, verdict in hypothesis_verdicts.items():
+        log.info(f"  {h}: {verdict}")
+    log.info("=" * 60)
+
+
+def _evaluate_hypotheses(summary: dict) -> dict[str, str]:
+    """根据 PREREGISTRATION.md §2 的判定标准评估各假设。"""
+    verdicts = {}
+
+    analysis = summary.get("analysis_pillar2", {})
+    contrasts = analysis.get("contrasts", {})
+
+    h4 = contrasts.get("H4_retention_C0_vs_C3", {})
+    h4_perm = h4.get("permutation", {})
+    h4_p = h4_perm.get("p_value", 1.0)
+    if h4_p < 0.01:
+        verdicts["H4"] = "CONFIRMED (p < 0.01, retention difference significant)"
+    elif h4_p < 0.05:
+        verdicts["H4"] = "MARGINAL (p < 0.05 but not < 0.01)"
+    else:
+        verdicts["H4"] = "NOT CONFIRMED"
+
+    h5 = contrasts.get("H5_alpha_C0_vs_C3", {})
+    h5_perm = h5.get("permutation", {})
+    h5_p = h5_perm.get("p_value", 1.0)
+    fep_data = summary.get("fep_h5", {})
+    fep_contrasts = fep_data.get("contrasts", {}).get("C0_vs_C3", {})
+    h5_pass = fep_contrasts.get("H5_pass", False)
+    if h5_pass and h5_p < 0.01:
+        verdicts["H5"] = "CONFIRMED (α_C0 < 0.85, α_C3 ≥ 0.95, p < 0.01)"
+    elif h5_p < 0.05:
+        verdicts["H5"] = "MARGINAL"
+    else:
+        verdicts["H5"] = "NOT CONFIRMED"
+
+    ind_data = summary.get("indicators_summary", {})
+    if isinstance(ind_data, list) and ind_data:
+        c0_mratios = []
+        c3_mratios = []
+        for item in ind_data:
+            if not isinstance(item, dict):
+                continue
+            cond = item.get("condition", "")
+            hot1 = item.get("indicators", {}).get("HOT1_meta_d_prime", {})
+            mr = hot1.get("m_ratio")
+            if mr is not None:
+                if cond == "C0_trueman_full":
+                    c0_mratios.append(mr)
+                elif cond == "C3_frozen":
+                    c3_mratios.append(mr)
+        if c0_mratios and c3_mratios:
+            import numpy as np
+            from experiments.v2_ambitious.harness.stats import permutation_test
+            pt = permutation_test(np.array(c0_mratios), np.array(c3_mratios))
+            p_val = pt.get("p_value", 1.0)
+            effect = (np.mean(c0_mratios) - np.mean(c3_mratios)) / max(np.std(c0_mratios + c3_mratios), 1e-3)
+            if p_val < 0.01 and effect >= 0.5:
+                verdicts["H1"] = f"CONFIRMED (p={p_val:.4f}, d≈{effect:.2f})"
+            else:
+                verdicts["H1"] = f"NOT CONFIRMED (p={p_val:.4f}, d≈{effect:.2f})"
+        else:
+            verdicts["H1"] = "INSUFFICIENT DATA"
+    else:
+        verdicts["H1"] = "INSUFFICIENT DATA"
+
+    verdicts["H2"] = "PENDING (requires RSA analysis on self-model probes)"
+    verdicts["H3"] = "PENDING (requires SAE causal intervention results)"
+
+    intervention_dir = Path("experiments/v2_ambitious/results/mechanistic/intervention")
+    if intervention_dir.exists():
+        clamp_files = list(intervention_dir.glob("intervention_clamp_*.json"))
+        inject_files = list(intervention_dir.glob("intervention_inject_*.json"))
+        if clamp_files and inject_files:
+            verdicts["H3"] = "DATA AVAILABLE (run detailed analysis on intervention results)"
+
+    return verdicts
 
 
 def status() -> None:
-    """打印每个 stage 的完成状态。"""
     checks = {
         "stage0 stream":     Path("experiments/v2_ambitious/data/stimulus_stream.jsonl").exists(),
+        "stage0 probes":     Path("experiments/v2_ambitious/data/probes/metacog_full.jsonl").exists(),
         "stage1 longhorizon": any(Path("experiments/v2_ambitious/results/longhorizon").glob("*/trajectory.csv"))
                                if Path("experiments/v2_ambitious/results/longhorizon").exists() else False,
         "stage2 SAE":        Path("experiments/v2_ambitious/results/mechanistic/sae_layer16.pt").exists(),
         "stage2 features":   Path("experiments/v2_ambitious/results/mechanistic/features_anxiety.json").exists(),
+        "stage3 indicators": Path("experiments/v2_ambitious/results/indicators/indicators_summary.json").exists(),
         "stage5 analysis":   Path("experiments/v2_ambitious/results/analysis_pillar2.json").exists(),
         "stage5 fep":        Path("experiments/v2_ambitious/results/fep_h5.json").exists(),
         "stage6 summary":    Path("experiments/v2_ambitious/results/v2_summary.json").exists(),
     }
     for k, v in checks.items():
-        print(f"  [{'✓' if v else ' '}] {k}")
+        sym = "OK" if v else "  "
+        print(f"  [{sym}] {k}")
 
 
 def main():
-    p = argparse.ArgumentParser()
+    p = argparse.ArgumentParser(description="TrueMan v2 experiment orchestrator")
     p.add_argument("--stage", default="all",
-                   choices=["all", "stage0", "stage1", "stage2", "stage3", "stage5", "stage6"])
+                   choices=["all", "stage0", "stage1", "stage2", "stage3", "stage4", "stage5", "stage6"])
     p.add_argument("--longhorizon-config", default="experiments/v2_ambitious/configs/longhorizon.yaml")
     p.add_argument("--mechanistic-config", default="experiments/v2_ambitious/configs/mechanistic.yaml")
     p.add_argument("--indicators-config", default="experiments/v2_ambitious/configs/indicators.yaml")
@@ -215,13 +395,24 @@ def main():
     p.add_argument("--force", action="store_true", help="强制重跑已完成的子任务")
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--status", action="store_true")
+    p.add_argument("--skip-env-check", action="store_true")
     args = p.parse_args()
+
+    (ROOT / "results").mkdir(parents=True, exist_ok=True)
 
     if args.status:
         status()
         return
 
-    # 字符串参数 → list
+    if not args.skip_env_check:
+        missing = _check_environment()
+        if missing:
+            log.error(f"Missing required packages: {missing}")
+            log.error(f"Install with: pip install {' '.join(missing)}")
+            sys.exit(1)
+        else:
+            log.info("Environment check passed")
+
     for k in ("conditions", "base_models", "seeds"):
         v = getattr(args, k)
         if isinstance(v, str):
@@ -233,20 +424,38 @@ def main():
     ind_cfg = yaml.safe_load(Path(args.indicators_config).read_text(encoding="utf-8"))
 
     t0 = time.time()
-    if args.stage in ("all", "stage0"):
-        stage0_stream(args, lh_cfg)
-    if args.stage in ("all", "stage1"):
-        stage1_longhorizon(args, lh_cfg)
-    if args.stage in ("all", "stage2"):
-        stage2_mechanistic(args, mech_cfg)
-    if args.stage in ("all", "stage3"):
-        stage3_indicators(args, ind_cfg)
-    if args.stage in ("all", "stage5"):
-        stage5_theory(args)
-    if args.stage in ("all", "stage6"):
-        stage6_summary(args)
+    stages_to_run = []
+    if args.stage == "all":
+        stages_to_run = ["stage0", "stage1", "stage2", "stage3", "stage4", "stage5", "stage6"]
+    else:
+        stages_to_run = [args.stage]
 
-    print(f"\n[run_v2] Total elapsed: {time.time() - t0:.1f}s")
+    for stage_name in stages_to_run:
+        log.info(f"\n{'='*60}")
+        log.info(f"Starting {stage_name}")
+        log.info(f"{'='*60}")
+        try:
+            if stage_name == "stage0":
+                stage0_stream(args, lh_cfg)
+            elif stage_name == "stage1":
+                stage1_longhorizon(args, lh_cfg)
+            elif stage_name == "stage2":
+                stage2_mechanistic(args, mech_cfg)
+            elif stage_name == "stage3":
+                stage3_indicators(args, ind_cfg)
+            elif stage_name == "stage4":
+                stage4_falsification(args, lh_cfg)
+            elif stage_name == "stage5":
+                stage5_theory(args, lh_cfg)
+            elif stage_name == "stage6":
+                stage6_summary(args)
+        except Exception as e:
+            log.error(f"[{stage_name}] FAILED with exception: {e}")
+            import traceback
+            log.error(traceback.format_exc())
+
+    elapsed = time.time() - t0
+    log.info(f"\n[run_v2] Total elapsed: {elapsed:.1f}s ({elapsed/3600:.2f}h)")
 
 
 if __name__ == "__main__":
