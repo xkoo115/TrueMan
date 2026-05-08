@@ -97,15 +97,27 @@ class OpenAICompatibleLLM(LLMBackend):
 
         return state_embedding, token_logprobs
 
-    def _api_call_with_retry(self, api_func, max_retries=5, base_delay=2.0):
-        """带指数退避重试的API调用封装。"""
+    def _api_call_with_retry(self, api_func, max_retries=8, base_delay=3.0):
+        """带指数退避重试的API调用封装。
+
+        针对DeepSeek等API的限流（HTTP 429），使用更长的退避时间。
+        429错误使用2倍退避倍数，其他错误使用标准退避。
+        """
         for attempt in range(max_retries):
             try:
                 return api_func()
             except Exception as e:
                 if attempt == max_retries - 1:
                     raise RuntimeError(f"API_CALL_FAILED after {max_retries} retries: {e}") from e
-                delay = base_delay * (2 ** attempt) + (0.5 * (attempt + 1))
+                is_rate_limit = (
+                    "429" in str(e)
+                    or "rate" in str(e).lower()
+                    or "RateLimitError" in type(e).__name__
+                )
+                if is_rate_limit:
+                    delay = base_delay * (3 ** attempt) + (1.0 * (attempt + 1))
+                else:
+                    delay = base_delay * (2 ** attempt) + (0.5 * (attempt + 1))
                 print(f"    [API重试] 第{attempt+1}次失败，{delay:.1f}s后重试: {type(e).__name__}")
                 time.sleep(delay)
 

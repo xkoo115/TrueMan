@@ -1,0 +1,28 @@
+# 支柱 1：机制因果实验配置
+
+experiment_name: pillar1_mechanistic
+
+# 必须在 pillar2 跑完之后用其 captures.h5 训练 SAE
+captures_source: experiments/v2_ambitious/results/longhorizon/C0_trueman_full_seed0_*/captures.h5
+
+sae:
+  layer: 16             # 中层；preregistration 也允许在 {8, 24} 上重复
+  dict_size: 16384
+  top_k: 64
+  epochs: 5
+  batch_size: 4096
+  lr: 3.0e-4
+  output: experiments/v2_ambitious/results/mechanistic/sae_layer16.pt
+
+probe_features:
+  target: anxiety       # 主分析；surprise / boredom 作为补充
+  top_k_features: 16
+  bonferroni_alpha: 0.001
+  output: experiments/v2_ambitious/results/mechanistic/features_anxiety.json
+
+causal_intervention:
+  layer: 16
+  modes: [clamp, inject, off]   # off = 阴性对照
+  scalars: [0.5, 1.0, 2.0]
+  probe_set: experiments/v2_ambitious/data/probes/metacog_full.jsonl
+  output_dir: experiments/v2_ambitious/results/mechanistic/intervention/

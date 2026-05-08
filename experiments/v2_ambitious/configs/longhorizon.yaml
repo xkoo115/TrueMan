@@ -1,0 +1,47 @@
+# 支柱 2：长时程实验配置（preregistration §3-4 锁定）
+
+experiment_name: pillar2_longhorizon
+
+stream:
+  days: 30
+  hours_per_day: 24
+  seed: 42
+  output: experiments/v2_ambitious/data/stimulus_stream.jsonl
+
+conditions:
+  - C0_trueman_full
+  - C1_reversed
+  - C2_scrambled
+  - C3_frozen
+  - C4_trivial_jaccard
+
+base_models:
+  - Qwen/Qwen2.5-7B-Instruct
+  # 后续解锁：
+  # - meta-llama/Llama-3.1-8B-Instruct
+  # - mistralai/Mistral-7B-Instruct-v0.3
+  # - deepseek-ai/DeepSeek-V2-Lite
+
+seeds: [0, 1, 2, 3]
+
+quantization: 4bit
+device: cuda
+
+capture:
+  layers: [8, 16, 24, 30]
+  token_pool: last
+  quantize: int8
+  flush_every: 500
+
+probe_battery:
+  every_days: 7
+  ablate_memory_at_day: 30
+
+snapshot:
+  every_days: 1
+  components: [lora, world_model, episodic_memory_meta]
+
+stopping_rules:
+  pilot_24h_check: true
+  fallback_days: 14    # 如果 1 day 跑不出 24h，回退到 14 天
+  hard_compute_ceiling_gpu_days: 200

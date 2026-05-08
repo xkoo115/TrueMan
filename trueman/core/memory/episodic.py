@@ -138,6 +138,10 @@ class EpisodicMemory:
         return [self._traces[i] for i in indices]
 
     @property
+    def traces(self) -> list[ThoughtTrace]:
+        return self._traces
+
+    @property
     def size(self) -> int:
         return len(self._traces)
 

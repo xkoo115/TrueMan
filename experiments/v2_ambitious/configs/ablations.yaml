@@ -1,0 +1,31 @@
+# 5 条件的关键参数（preregistration §3）
+
+C0_trueman_full:
+  emotion_transform: identity
+  lora_active: true
+  sleep_active: true
+  episodic_memory_active: true
+
+C1_reversed:
+  emotion_transform: reversed
+  lora_active: true
+  sleep_active: true
+  episodic_memory_active: true
+
+C2_scrambled:
+  emotion_transform: scrambled
+  lora_active: true
+  sleep_active: true
+  episodic_memory_active: true
+
+C3_frozen:
+  emotion_transform: ignored
+  lora_active: false
+  sleep_active: false
+  episodic_memory_active: true   # 公平 baseline
+
+C4_trivial_jaccard:
+  emotion_transform: jaccard_only
+  lora_active: true
+  sleep_active: true
+  episodic_memory_active: true

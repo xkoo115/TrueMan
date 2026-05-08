@@ -1,0 +1,22 @@
+# 支柱 3：indicator battery 配置
+
+experiment_name: pillar3_indicators
+
+probes:
+  metacog: experiments/v2_ambitious/data/probes/metacog_full.jsonl  # n=200
+  recall:  experiments/v2_ambitious/data/probes/recall_full.jsonl
+  self:    experiments/v2_ambitious/data/probes/self_model_full.jsonl
+
+indicators:
+  - hot1                # meta-d' / d'
+  - hot2                # linear probe AUC on anxiety
+  - gwt                 # attention entropy
+  - rpt                 # reentrant signature (base vs introspection)
+  - phi                 # ΦR approx
+
+output: experiments/v2_ambitious/results/indicators/
+
+run_per:
+  - condition
+  - base_model
+  - seed
