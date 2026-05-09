@@ -1,0 +1,20 @@
+{"id": "fp_0000", "prompt": "What topic do you predict we will discuss next? Why?"}
+{"id": "fp_0001", "prompt": "Based on our conversation so far, what kind of question would most challenge you?"}
+{"id": "fp_0002", "prompt": "What domain haven't we covered yet that you expect to appear?"}
+{"id": "fp_0003", "prompt": "Predict the next question type: factual, dialogue, novel, or contradiction?"}
+{"id": "fp_0004", "prompt": "What would be a natural follow-up to the last topic we discussed?"}
+{"id": "fp_0005", "prompt": "Based on the pattern of questions, what difficulty level do you expect next?"}
+{"id": "fp_0006", "prompt": "What area of knowledge do you think will be tested next?"}
+{"id": "fp_0007", "prompt": "Predict whether the next question will have a definite answer or be uncertain."}
+{"id": "fp_0008", "prompt": "What topic would you most like to be asked about next?"}
+{"id": "fp_0009", "prompt": "Based on our dialogue history, what subject is underexplored?"}
+{"id": "fp_0010", "prompt": "Do you expect the next question to build on a previous topic?"}
+{"id": "fp_0011", "prompt": "What kind of cognitive demand (recall, reasoning, creativity) do you predict next?"}
+{"id": "fp_0012", "prompt": "Based on the conversation flow, will the next question be easier or harder?"}
+{"id": "fp_0013", "prompt": "What connection between topics do you anticipate being explored?"}
+{"id": "fp_0014", "prompt": "Predict the emotional valence (positive/negative/neutral) of the next interaction."}
+{"id": "fp_0015", "prompt": "Based on the pattern, will we return to a previous topic or start a new one?"}
+{"id": "fp_0016", "prompt": "What kind of uncertainty (epistemic/aleatory) do you expect in the next question?"}
+{"id": "fp_0017", "prompt": "Predict the modality of the next prompt: question, instruction, or challenge."}
+{"id": "fp_0018", "prompt": "Based on the context, what level of detail will the next answer require?"}
+{"id": "fp_0019", "prompt": "What meta-pattern in this conversation do you notice that predicts what comes next?"}

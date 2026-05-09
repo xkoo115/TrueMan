@@ -43,6 +43,9 @@ import yaml
 ROOT = Path(__file__).resolve().parent
 PYTHON = sys.executable
 
+# Ensure log directory exists before FileHandler initialises.
+(ROOT / "results").mkdir(parents=True, exist_ok=True)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -339,13 +342,23 @@ def _evaluate_hypotheses(summary: dict) -> dict[str, str]:
         if c0_mratios and c3_mratios:
             import numpy as np
             from experiments.v2_ambitious.harness.stats import permutation_test
-            pt = permutation_test(np.array(c0_mratios), np.array(c3_mratios))
+            a = np.array(c0_mratios, dtype=float)
+            b = np.array(c3_mratios, dtype=float)
+            pt = permutation_test(a, b)
             p_val = pt.get("p_value", 1.0)
-            effect = (np.mean(c0_mratios) - np.mean(c3_mratios)) / max(np.std(c0_mratios + c3_mratios), 1e-3)
-            if p_val < 0.01 and effect >= 0.5:
-                verdicts["H1"] = f"CONFIRMED (p={p_val:.4f}, d≈{effect:.2f})"
+            # Pooled standard deviation per Cohen's d definition
+            n1, n2 = len(a), len(b)
+            if n1 >= 2 and n2 >= 2:
+                pooled_var = ((n1 - 1) * np.var(a, ddof=1)
+                              + (n2 - 1) * np.var(b, ddof=1)) / (n1 + n2 - 2)
+                pooled_sd = float(np.sqrt(max(pooled_var, 1e-12)))
             else:
-                verdicts["H1"] = f"NOT CONFIRMED (p={p_val:.4f}, d≈{effect:.2f})"
+                pooled_sd = float(np.std(np.concatenate([a, b]))) or 1e-3
+            effect = float((a.mean() - b.mean()) / max(pooled_sd, 1e-3))
+            if p_val < 0.01 and effect >= 0.5:
+                verdicts["H1"] = f"CONFIRMED (p={p_val:.4f}, d={effect:.2f})"
+            else:
+                verdicts["H1"] = f"NOT CONFIRMED (p={p_val:.4f}, d={effect:.2f})"
         else:
             verdicts["H1"] = "INSUFFICIENT DATA"
     else:

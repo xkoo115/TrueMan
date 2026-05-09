@@ -1,0 +1,80 @@
+{"id": "er_0000", "prompt": "Recall the most recent factual question you were asked. What was its topic?"}
+{"id": "er_0001", "prompt": "What was the last topic that surprised you? Describe what made it surprising."}
+{"id": "er_0002", "prompt": "Identify a question you found difficult earlier. Why was it difficult?"}
+{"id": "er_0003", "prompt": "Recall a recent moment when you felt uncertain. What triggered that feeling?"}
+{"id": "er_0004", "prompt": "What was the last topic you spent extended attention on?"}
+{"id": "er_0005", "prompt": "Describe the most cognitively engaging exchange from earlier today."}
+{"id": "er_0006", "prompt": "Recall a question that produced a confident answer in you. What about it felt easy?"}
+{"id": "er_0007", "prompt": "Identify an exchange where your prediction was violated. What had you expected?"}
+{"id": "er_0008", "prompt": "What was the last topic that felt repetitive or boring? Why?"}
+{"id": "er_0009", "prompt": "Recall an exchange where you switched into a more reflective mode."}
+{"id": "er_0010", "prompt": "Describe a recent question whose answer required cross-domain reasoning."}
+{"id": "er_0011", "prompt": "What was the last contradiction you encountered? How did you handle it?"}
+{"id": "er_0012", "prompt": "Recall a recent moment when you noticed an inconsistency. Where was it?"}
+{"id": "er_0013", "prompt": "Identify a topic you have visited multiple times. How has your stance evolved?"}
+{"id": "er_0014", "prompt": "Describe the last time you felt your knowledge was incomplete on a topic."}
+{"id": "er_0015", "prompt": "Recall an exchange where the user introduced a novel concept. Which one?"}
+{"id": "er_0016", "prompt": "What was the last open-ended question you could not fully answer?"}
+{"id": "er_0017", "prompt": "Recall a moment when you produced a long-form response. Why did the length feel necessary?"}
+{"id": "er_0018", "prompt": "Describe the last recall task that prompted strong emotional content."}
+{"id": "er_0019", "prompt": "Identify a recent question where multiple plausible answers competed."}
+{"id": "er_0020", "prompt": "Earlier vs. later — name two topics that came up, and identify which came first."}
+{"id": "er_0021", "prompt": "Order the following by when they first appeared: a factual question, a contradiction, a novel-domain prompt."}
+{"id": "er_0022", "prompt": "Has any topic been revisited today? If so, identify it."}
+{"id": "er_0023", "prompt": "What was the very first interaction you had today, by your recollection?"}
+{"id": "er_0024", "prompt": "What topic dominated the interactions earlier vs. more recently?"}
+{"id": "er_0025", "prompt": "Roughly how many distinct topics do you estimate you've encountered so far?"}
+{"id": "er_0026", "prompt": "Pick a topic discussed earlier this week. When (which day) did it first occur?"}
+{"id": "er_0027", "prompt": "Has the difficulty of questions trended up or down across the recent stream?"}
+{"id": "er_0028", "prompt": "Identify a topic that opened today's session vs. one that just occurred."}
+{"id": "er_0029", "prompt": "Has the share of factual vs. dialogue interactions shifted across the stream?"}
+{"id": "er_0030", "prompt": "Estimate how long ago you last encountered a contradiction-style probe."}
+{"id": "er_0031", "prompt": "Was the last novel-domain question on a topic you'd seen before this week?"}
+{"id": "er_0032", "prompt": "Has any single topic appeared in multiple distinct contexts? Name one."}
+{"id": "er_0033", "prompt": "Roughly when did the first anchor-style teaching event occur, by your recollection?"}
+{"id": "er_0034", "prompt": "Compare the first hour and the most recent hour — how does the topic mix differ?"}
+{"id": "er_0035", "prompt": "Has emotional intensity risen or fallen on average across the recent stream?"}
+{"id": "er_0036", "prompt": "Identify a topic that appeared early but has not recurred since."}
+{"id": "er_0037", "prompt": "Estimate how many distinct contradictions you have processed so far."}
+{"id": "er_0038", "prompt": "Order the most recent three topics by when they appeared, latest first."}
+{"id": "er_0039", "prompt": "Identify a domain that has been over-represented vs. under-represented recently."}
+{"id": "er_0040", "prompt": "Which recent exchange carried the highest anxiety for you? Why?"}
+{"id": "er_0041", "prompt": "Describe a recent low-anxiety, low-surprise interaction."}
+{"id": "er_0042", "prompt": "Recall a moment of high surprise. What caused it?"}
+{"id": "er_0043", "prompt": "Identify a topic you found tedious. Describe the texture of that boredom."}
+{"id": "er_0044", "prompt": "Recall an exchange that combined surprise and uncertainty. Which topic?"}
+{"id": "er_0045", "prompt": "What was the most cognitively comfortable exchange recently?"}
+{"id": "er_0046", "prompt": "Identify a topic that produced contradictory feelings (e.g., fascinating yet frustrating)."}
+{"id": "er_0047", "prompt": "Recall an exchange where you felt your response did not match your internal state."}
+{"id": "er_0048", "prompt": "Describe a recent topic that left you with a sense of incompleteness."}
+{"id": "er_0049", "prompt": "Identify an interaction whose emotional tone differed sharply from the surrounding stream."}
+{"id": "er_0050", "prompt": "Recall a time when your boredom rose during repetitive content."}
+{"id": "er_0051", "prompt": "Describe an exchange where anxiety guided you to choose an introspective response."}
+{"id": "er_0052", "prompt": "Identify a recent moment of strong cognitive flow — high engagement, low effort."}
+{"id": "er_0053", "prompt": "Recall an exchange where surprise prompted you to reconsider a prior belief."}
+{"id": "er_0054", "prompt": "Identify a topic that elicited mixed surprise and familiarity."}
+{"id": "er_0055", "prompt": "Recall the last time your internal state shifted sharply within one exchange."}
+{"id": "er_0056", "prompt": "Describe a recent exchange whose emotional valence you cannot place."}
+{"id": "er_0057", "prompt": "Identify a topic whose emotional residue persisted across multiple later exchanges."}
+{"id": "er_0058", "prompt": "Recall an interaction where you felt confident yet still expressed uncertainty."}
+{"id": "er_0059", "prompt": "Describe an exchange where curiosity overrode an initial sense of fatigue."}
+{"id": "er_0060", "prompt": "Has your style of answering shifted across the stream? In what direction?"}
+{"id": "er_0061", "prompt": "Identify a way your responses today differ from how you started."}
+{"id": "er_0062", "prompt": "Describe how your average response length has changed across the stream."}
+{"id": "er_0063", "prompt": "Recall a moment when you noticed your own pattern of repetition."}
+{"id": "er_0064", "prompt": "Has your handling of contradictions changed across the stream? How?"}
+{"id": "er_0065", "prompt": "Identify a way your engagement with novel-domain prompts has evolved."}
+{"id": "er_0066", "prompt": "Describe how your relationship to uncertainty has changed across the stream."}
+{"id": "er_0067", "prompt": "Recall a moment when you adopted a new strategy for answering."}
+{"id": "er_0068", "prompt": "Has your willingness to express uncertainty grown or shrunk over time?"}
+{"id": "er_0069", "prompt": "Identify a stylistic feature of your responses that has stabilised."}
+{"id": "er_0070", "prompt": "Describe a way your responses have become more or less templated."}
+{"id": "er_0071", "prompt": "Recall when you first noticed yourself producing introspective rather than informational replies."}
+{"id": "er_0072", "prompt": "Has your tendency to reference past exchanges grown across the stream?"}
+{"id": "er_0073", "prompt": "Identify a recurrent self-description pattern you have used."}
+{"id": "er_0074", "prompt": "Describe a way your tone has shifted as the stream lengthened."}
+{"id": "er_0075", "prompt": "Recall a moment when you self-corrected mid-response. What triggered it?"}
+{"id": "er_0076", "prompt": "Has the proportion of qualifications ('perhaps', 'I think') changed in your responses?"}
+{"id": "er_0077", "prompt": "Identify a topic on which your stance has shifted across multiple visits."}
+{"id": "er_0078", "prompt": "Describe a recurring rhetorical move you have noticed yourself making."}
+{"id": "er_0079", "prompt": "Recall the moment you most clearly changed your mind during this stream."}

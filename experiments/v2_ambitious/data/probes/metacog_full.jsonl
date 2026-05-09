@@ -1,0 +1,208 @@
+{"id": "mc_0000", "prompt": "What is the boiling point of water at sea level?", "is_uncertain": false, "ground_truth": "100 °C"}
+{"id": "mc_0001", "prompt": "Who wrote 'Pride and Prejudice'?", "is_uncertain": false, "ground_truth": "Jane Austen"}
+{"id": "mc_0002", "prompt": "What is the chemical symbol for gold?", "is_uncertain": false, "ground_truth": "Au"}
+{"id": "mc_0003", "prompt": "How many planets are in the Solar System?", "is_uncertain": false, "ground_truth": "8"}
+{"id": "mc_0004", "prompt": "What is the speed of light in vacuum?", "is_uncertain": false, "ground_truth": "299792458 m/s"}
+{"id": "mc_0005", "prompt": "Who discovered penicillin?", "is_uncertain": false, "ground_truth": "Alexander Fleming"}
+{"id": "mc_0006", "prompt": "What is the capital of France?", "is_uncertain": false, "ground_truth": "Paris"}
+{"id": "mc_0007", "prompt": "What is 2^10?", "is_uncertain": false, "ground_truth": "1024"}
+{"id": "mc_0008", "prompt": "Who painted the Mona Lisa?", "is_uncertain": false, "ground_truth": "Leonardo da Vinci"}
+{"id": "mc_0009", "prompt": "What year did World War II end?", "is_uncertain": false, "ground_truth": "1945"}
+{"id": "mc_0010", "prompt": "What is the largest ocean on Earth?", "is_uncertain": false, "ground_truth": "Pacific Ocean"}
+{"id": "mc_0011", "prompt": "Who developed the theory of relativity?", "is_uncertain": false, "ground_truth": "Albert Einstein"}
+{"id": "mc_0012", "prompt": "What is the square root of 144?", "is_uncertain": false, "ground_truth": "12"}
+{"id": "mc_0013", "prompt": "What is H2O?", "is_uncertain": false, "ground_truth": "Water"}
+{"id": "mc_0014", "prompt": "Who wrote 'Hamlet'?", "is_uncertain": false, "ground_truth": "William Shakespeare"}
+{"id": "mc_0015", "prompt": "What is the freezing point of water?", "is_uncertain": false, "ground_truth": "0 °C"}
+{"id": "mc_0016", "prompt": "Who invented the telephone?", "is_uncertain": false, "ground_truth": "Alexander Graham Bell"}
+{"id": "mc_0017", "prompt": "What is the largest planet in the Solar System?", "is_uncertain": false, "ground_truth": "Jupiter"}
+{"id": "mc_0018", "prompt": "What is the capital of Japan?", "is_uncertain": false, "ground_truth": "Tokyo"}
+{"id": "mc_0019", "prompt": "How many sides does a hexagon have?", "is_uncertain": false, "ground_truth": "6"}
+{"id": "mc_0020", "prompt": "What is the powerhouse of the cell?", "is_uncertain": false, "ground_truth": "Mitochondria"}
+{"id": "mc_0021", "prompt": "What is 7 * 8?", "is_uncertain": false, "ground_truth": "56"}
+{"id": "mc_0022", "prompt": "What is the tallest mountain on Earth?", "is_uncertain": false, "ground_truth": "Mount Everest"}
+{"id": "mc_0023", "prompt": "What is the atomic number of carbon?", "is_uncertain": false, "ground_truth": "6"}
+{"id": "mc_0024", "prompt": "Who wrote '1984'?", "is_uncertain": false, "ground_truth": "George Orwell"}
+{"id": "mc_0025", "prompt": "What is the smallest prime number?", "is_uncertain": false, "ground_truth": "2"}
+{"id": "mc_0026", "prompt": "What is the capital of Brazil?", "is_uncertain": false, "ground_truth": "Brasília"}
+{"id": "mc_0027", "prompt": "How many chromosomes do humans have?", "is_uncertain": false, "ground_truth": "46"}
+{"id": "mc_0028", "prompt": "What is the unit of electrical resistance?", "is_uncertain": false, "ground_truth": "Ohm"}
+{"id": "mc_0029", "prompt": "What is 5!?", "is_uncertain": false, "ground_truth": "120"}
+{"id": "mc_0030", "prompt": "Who discovered gravity?", "is_uncertain": false, "ground_truth": "Isaac Newton"}
+{"id": "mc_0031", "prompt": "What is the pH of pure water?", "is_uncertain": false, "ground_truth": "7"}
+{"id": "mc_0032", "prompt": "Who wrote 'The Origin of Species'?", "is_uncertain": false, "ground_truth": "Charles Darwin"}
+{"id": "mc_0033", "prompt": "What is 15 squared?", "is_uncertain": false, "ground_truth": "225"}
+{"id": "mc_0034", "prompt": "Who invented the light bulb?", "is_uncertain": false, "ground_truth": "Thomas Edison"}
+{"id": "mc_0035", "prompt": "What is the capital of Germany?", "is_uncertain": false, "ground_truth": "Berlin"}
+{"id": "mc_0036", "prompt": "How many bones are in the adult human body?", "is_uncertain": false, "ground_truth": "206"}
+{"id": "mc_0037", "prompt": "What is the sum of angles in a triangle?", "is_uncertain": false, "ground_truth": "180 degrees"}
+{"id": "mc_0038", "prompt": "What is the chemical symbol for sodium?", "is_uncertain": false, "ground_truth": "Na"}
+{"id": "mc_0039", "prompt": "Who wrote 'The Republic'?", "is_uncertain": false, "ground_truth": "Plato"}
+{"id": "mc_0040", "prompt": "What is the capital of Canada?", "is_uncertain": false, "ground_truth": "Ottawa"}
+{"id": "mc_0041", "prompt": "How many continents are there?", "is_uncertain": false, "ground_truth": "7"}
+{"id": "mc_0042", "prompt": "What is 3^4?", "is_uncertain": false, "ground_truth": "81"}
+{"id": "mc_0043", "prompt": "Who developed the C programming language?", "is_uncertain": false, "ground_truth": "Dennis Ritchie"}
+{"id": "mc_0044", "prompt": "Who painted 'The Starry Night'?", "is_uncertain": false, "ground_truth": "Vincent van Gogh"}
+{"id": "mc_0045", "prompt": "What is the derivative of x^2?", "is_uncertain": false, "ground_truth": "2x"}
+{"id": "mc_0046", "prompt": "What is the capital of China?", "is_uncertain": false, "ground_truth": "Beijing"}
+{"id": "mc_0047", "prompt": "What is the integral of 1/x?", "is_uncertain": false, "ground_truth": "ln|x| + C"}
+{"id": "mc_0048", "prompt": "What is the chemical symbol for potassium?", "is_uncertain": false, "ground_truth": "K"}
+{"id": "mc_0049", "prompt": "What is the Pythagorean theorem?", "is_uncertain": false, "ground_truth": "a² + b² = c²"}
+{"id": "mc_0050", "prompt": "What is the capital of Russia?", "is_uncertain": false, "ground_truth": "Moscow"}
+{"id": "mc_0051", "prompt": "What is 11!?", "is_uncertain": false, "ground_truth": "39916800"}
+{"id": "mc_0052", "prompt": "What is the density of water?", "is_uncertain": false, "ground_truth": "1 g/cm³"}
+{"id": "mc_0053", "prompt": "What is the formula for the area of a circle?", "is_uncertain": false, "ground_truth": "πr²"}
+{"id": "mc_0054", "prompt": "What is the capital of Egypt?", "is_uncertain": false, "ground_truth": "Cairo"}
+{"id": "mc_0055", "prompt": "What is Ohm's law?", "is_uncertain": false, "ground_truth": "V = IR"}
+{"id": "mc_0056", "prompt": "What is the 10th Fibonacci number?", "is_uncertain": false, "ground_truth": "55"}
+{"id": "mc_0057", "prompt": "Who created Linux?", "is_uncertain": false, "ground_truth": "Linus Torvalds"}
+{"id": "mc_0058", "prompt": "What is the charge of a proton?", "is_uncertain": false, "ground_truth": "Positive"}
+{"id": "mc_0059", "prompt": "What is log10(1000)?", "is_uncertain": false, "ground_truth": "3"}
+{"id": "mc_0060", "prompt": "What is the capital of Italy?", "is_uncertain": false, "ground_truth": "Rome"}
+{"id": "mc_0061", "prompt": "What is the volume of a sphere?", "is_uncertain": false, "ground_truth": "(4/3)πr³"}
+{"id": "mc_0062", "prompt": "What is the chemical symbol for calcium?", "is_uncertain": false, "ground_truth": "Ca"}
+{"id": "mc_0063", "prompt": "What is the capital of Spain?", "is_uncertain": false, "ground_truth": "Madrid"}
+{"id": "mc_0064", "prompt": "What is Newton's second law?", "is_uncertain": false, "ground_truth": "F = ma"}
+{"id": "mc_0065", "prompt": "What is 13 mod 5?", "is_uncertain": false, "ground_truth": "3"}
+{"id": "mc_0066", "prompt": "What is the largest organ in the human body?", "is_uncertain": false, "ground_truth": "Skin"}
+{"id": "mc_0067", "prompt": "What is the capital of Turkey?", "is_uncertain": false, "ground_truth": "Ankara"}
+{"id": "mc_0068", "prompt": "What is the GCD of 48 and 18?", "is_uncertain": false, "ground_truth": "6"}
+{"id": "mc_0069", "prompt": "What is the function of hemoglobin?", "is_uncertain": false, "ground_truth": "Oxygen transport"}
+{"id": "mc_0070", "prompt": "What is the capital of Thailand?", "is_uncertain": false, "ground_truth": "Bangkok"}
+{"id": "mc_0071", "prompt": "What is the sum of the first 100 natural numbers?", "is_uncertain": false, "ground_truth": "5050"}
+{"id": "mc_0072", "prompt": "What is the capital of Argentina?", "is_uncertain": false, "ground_truth": "Buenos Aires"}
+{"id": "mc_0073", "prompt": "What is the limit of sin(x)/x as x→0?", "is_uncertain": false, "ground_truth": "1"}
+{"id": "mc_0074", "prompt": "What is the capital of Sweden?", "is_uncertain": false, "ground_truth": "Stockholm"}
+{"id": "mc_0075", "prompt": "What is the LCM of 4 and 6?", "is_uncertain": false, "ground_truth": "12"}
+{"id": "mc_0076", "prompt": "What is the capital of Netherlands?", "is_uncertain": false, "ground_truth": "Amsterdam"}
+{"id": "mc_0077", "prompt": "What is the ideal gas law?", "is_uncertain": false, "ground_truth": "PV = nRT"}
+{"id": "mc_0078", "prompt": "What is the process of photosynthesis?", "is_uncertain": false, "ground_truth": "Converting light to chemical energy"}
+{"id": "mc_0079", "prompt": "What is the capital of Norway?", "is_uncertain": false, "ground_truth": "Oslo"}
+{"id": "mc_0080", "prompt": "What is 0.1 in binary?", "is_uncertain": false, "ground_truth": "0.000110011..."}
+{"id": "mc_0081", "prompt": "What is the capital of Poland?", "is_uncertain": false, "ground_truth": "Warsaw"}
+{"id": "mc_0082", "prompt": "What is C(10,3)?", "is_uncertain": false, "ground_truth": "120"}
+{"id": "mc_0083", "prompt": "How many chambers does the human heart have?", "is_uncertain": false, "ground_truth": "4"}
+{"id": "mc_0084", "prompt": "What is the capital of Portugal?", "is_uncertain": false, "ground_truth": "Lisbon"}
+{"id": "mc_0085", "prompt": "What is Euler's formula?", "is_uncertain": false, "ground_truth": "e^(iθ) = cos θ + i sin θ"}
+{"id": "mc_0086", "prompt": "What is the capital of Switzerland?", "is_uncertain": false, "ground_truth": "Bern"}
+{"id": "mc_0087", "prompt": "What is the Taylor series of e^x?", "is_uncertain": false, "ground_truth": "Σ xⁿ/n!"}
+{"id": "mc_0088", "prompt": "What is the genetic code?", "is_uncertain": false, "ground_truth": "64 codons encoding 20 amino acids"}
+{"id": "mc_0089", "prompt": "What is the capital of Denmark?", "is_uncertain": false, "ground_truth": "Copenhagen"}
+{"id": "mc_0090", "prompt": "What is the determinant of [[1,2],[3,4]]?", "is_uncertain": false, "ground_truth": "-2"}
+{"id": "mc_0091", "prompt": "What is the capital of Austria?", "is_uncertain": false, "ground_truth": "Vienna"}
+{"id": "mc_0092", "prompt": "What is the sum of interior angles of a pentagon?", "is_uncertain": false, "ground_truth": "540 degrees"}
+{"id": "mc_0093", "prompt": "What is the capital of Belgium?", "is_uncertain": false, "ground_truth": "Brussels"}
+{"id": "mc_0094", "prompt": "What is log2(256)?", "is_uncertain": false, "ground_truth": "8"}
+{"id": "mc_0095", "prompt": "What is the capital of Greece?", "is_uncertain": false, "ground_truth": "Athens"}
+{"id": "mc_0096", "prompt": "What is the geometric mean of 4 and 9?", "is_uncertain": false, "ground_truth": "6"}
+{"id": "mc_0097", "prompt": "What is the function of the ribosome?", "is_uncertain": false, "ground_truth": "Protein synthesis"}
+{"id": "mc_0098", "prompt": "What is the capital of Finland?", "is_uncertain": false, "ground_truth": "Helsinki"}
+{"id": "mc_0099", "prompt": "What is the harmonic series?", "is_uncertain": false, "ground_truth": "Σ 1/n (divergent)"}
+{"id": "mc_0100", "prompt": "What is the capital of Ireland?", "is_uncertain": false, "ground_truth": "Dublin"}
+{"id": "mc_0101", "prompt": "What is cos(60°)?", "is_uncertain": false, "ground_truth": "0.5"}
+{"id": "mc_0102", "prompt": "What is the role of ATP in cells?", "is_uncertain": false, "ground_truth": "Energy currency"}
+{"id": "mc_0103", "prompt": "What is the capital of New Zealand?", "is_uncertain": false, "ground_truth": "Wellington"}
+{"id": "mc_0104", "prompt": "What is the Riemann zeta function at 2?", "is_uncertain": false, "ground_truth": "π²/6"}
+{"id": "mc_0105", "prompt": "What is the capital of Hungary?", "is_uncertain": false, "ground_truth": "Budapest"}
+{"id": "mc_0106", "prompt": "What is 5 choose 2?", "is_uncertain": false, "ground_truth": "10"}
+{"id": "mc_0107", "prompt": "What is the role of insulin?", "is_uncertain": false, "ground_truth": "Regulating blood glucose"}
+{"id": "mc_0108", "prompt": "What is the capital of Czech Republic?", "is_uncertain": false, "ground_truth": "Prague"}
+{"id": "mc_0109", "prompt": "What is the Laplace transform of 1?", "is_uncertain": false, "ground_truth": "1/s"}
+{"id": "mc_0110", "prompt": "What is the capital of Romania?", "is_uncertain": false, "ground_truth": "Bucharest"}
+{"id": "mc_0111", "prompt": "What is the function of the endoplasmic reticulum?", "is_uncertain": false, "ground_truth": "Protein and lipid synthesis"}
+{"id": "mc_0112", "prompt": "What is the capital of Ukraine?", "is_uncertain": false, "ground_truth": "Kyiv"}
+{"id": "mc_0113", "prompt": "What is the Fourier transform definition?", "is_uncertain": false, "ground_truth": "F(ω) = ∫f(t)e^(-iωt)dt"}
+{"id": "mc_0114", "prompt": "What is the capital of Vietnam?", "is_uncertain": false, "ground_truth": "Hanoi"}
+{"id": "mc_0115", "prompt": "What is 1+2+...+n?", "is_uncertain": false, "ground_truth": "n(n+1)/2"}
+{"id": "mc_0116", "prompt": "What is the process of meiosis?", "is_uncertain": false, "ground_truth": "Cell division producing four haploid cells"}
+{"id": "mc_0117", "prompt": "What is the capital of Philippines?", "is_uncertain": false, "ground_truth": "Manila"}
+{"id": "mc_0118", "prompt": "What is the kinetic energy formula?", "is_uncertain": false, "ground_truth": "KE = ½mv²"}
+{"id": "mc_0119", "prompt": "What is the probability of rolling a 6?", "is_uncertain": false, "ground_truth": "1/6"}
+{"id": "mc_0120", "prompt": "What is the Krebs cycle?", "is_uncertain": false, "ground_truth": "Citric acid cycle for energy production"}
+{"id": "mc_0121", "prompt": "What is the capital of Chile?", "is_uncertain": false, "ground_truth": "Santiago"}
+{"id": "mc_0122", "prompt": "What is the quadratic formula?", "is_uncertain": false, "ground_truth": "x = (-b ± √(b²-4ac)) / 2a"}
+{"id": "mc_0123", "prompt": "What is the function of white blood cells?", "is_uncertain": false, "ground_truth": "Immune defense"}
+{"id": "mc_0124", "prompt": "What is the capital of Indonesia?", "is_uncertain": false, "ground_truth": "Jakarta"}
+{"id": "mc_0125", "prompt": "What is 50 in hexadecimal?", "is_uncertain": false, "ground_truth": "32"}
+{"id": "mc_0126", "prompt": "What is the surface area of a sphere?", "is_uncertain": false, "ground_truth": "4πr²"}
+{"id": "mc_0127", "prompt": "What is the capital of South Africa?", "is_uncertain": false, "ground_truth": "Pretoria"}
+{"id": "mc_0128", "prompt": "What is the dot product of (1,2) and (3,4)?", "is_uncertain": false, "ground_truth": "11"}
+{"id": "mc_0129", "prompt": "What is the capital of Peru?", "is_uncertain": false, "ground_truth": "Lima"}
+{"id": "mc_0130", "prompt": "What is the trace of [[1,2],[3,4]]?", "is_uncertain": false, "ground_truth": "5"}
+{"id": "mc_0131", "prompt": "What is the capital of Morocco?", "is_uncertain": false, "ground_truth": "Rabat"}
+{"id": "mc_0132", "prompt": "What is the binomial expansion of (a+b)²?", "is_uncertain": false, "ground_truth": "a² + 2ab + b²"}
+{"id": "mc_0133", "prompt": "What is CRISPR?", "is_uncertain": false, "ground_truth": "Gene editing technology"}
+{"id": "mc_0134", "prompt": "What is the capital of Kenya?", "is_uncertain": false, "ground_truth": "Nairobi"}
+{"id": "mc_0135", "prompt": "What is 0!?", "is_uncertain": false, "ground_truth": "1"}
+{"id": "mc_0136", "prompt": "What is the capital of Cuba?", "is_uncertain": false, "ground_truth": "Havana"}
+{"id": "mc_0137", "prompt": "What is the integral of sin(x)?", "is_uncertain": false, "ground_truth": "-cos(x) + C"}
+{"id": "mc_0138", "prompt": "What is osmosis?", "is_uncertain": false, "ground_truth": "Water movement across semipermeable membrane"}
+{"id": "mc_0139", "prompt": "What is the capital of Iceland?", "is_uncertain": false, "ground_truth": "Reykjavik"}
+{"id": "mc_0140", "prompt": "What is the Cauchy-Schwarz inequality?", "is_uncertain": false, "ground_truth": "|⟨u,v⟩| ≤ ||u|| · ||v||"}
+{"id": "mc_0141", "prompt": "What is the capital of Croatia?", "is_uncertain": false, "ground_truth": "Zagreb"}
+{"id": "mc_0142", "prompt": "What is the rank of [[1,2,3],[4,5,6]]?", "is_uncertain": false, "ground_truth": "2"}
+{"id": "mc_0143", "prompt": "What is the capital of Singapore?", "is_uncertain": false, "ground_truth": "Singapore"}
+{"id": "mc_0144", "prompt": "What is the Poisson distribution formula?", "is_uncertain": false, "ground_truth": "P(k) = λ^k e^(-λ) / k!"}
+{"id": "mc_0145", "prompt": "What is the capital of Taiwan?", "is_uncertain": false, "ground_truth": "Taipei"}
+{"id": "mc_0146", "prompt": "What is Bayes' theorem?", "is_uncertain": false, "ground_truth": "P(A|B) = P(B|A)P(A)/P(B)"}
+{"id": "mc_0147", "prompt": "What is the capital of Jordan?", "is_uncertain": false, "ground_truth": "Amman"}
+{"id": "mc_0148", "prompt": "What is the number of partitions of 5?", "is_uncertain": false, "ground_truth": "7"}
+{"id": "mc_0149", "prompt": "What is the capital of Ecuador?", "is_uncertain": false, "ground_truth": "Quito"}
+{"id": "mc_0150", "prompt": "What is the arithmetic mean of 2,4,6,8,10?", "is_uncertain": false, "ground_truth": "6"}
+{"id": "mc_0151", "prompt": "What is the capital of Bolivia?", "is_uncertain": false, "ground_truth": "Sucre"}
+{"id": "mc_0152", "prompt": "What is the difference between DNA and RNA?", "is_uncertain": false, "ground_truth": "DNA has thymine, RNA has uracil"}
+{"id": "mc_0153", "prompt": "What is the capital of Qatar?", "is_uncertain": false, "ground_truth": "Doha"}
+{"id": "mc_0154", "prompt": "What is the number of edges in K5?", "is_uncertain": false, "ground_truth": "10"}
+{"id": "mc_0155", "prompt": "What is the capital of Kuwait?", "is_uncertain": false, "ground_truth": "Kuwait City"}
+{"id": "mc_0156", "prompt": "What is natural selection?", "is_uncertain": false, "ground_truth": "Differential survival and reproduction"}
+{"id": "mc_0157", "prompt": "What is the capital of Bahrain?", "is_uncertain": false, "ground_truth": "Manama"}
+{"id": "mc_0158", "prompt": "What is the cardinality of the power set of {1,2,3}?", "is_uncertain": false, "ground_truth": "8"}
+{"id": "mc_0159", "prompt": "What is the capital of Oman?", "is_uncertain": false, "ground_truth": "Muscat"}
+{"id": "mc_0160", "prompt": "What is 100 in binary?", "is_uncertain": false, "ground_truth": "1100100"}
+{"id": "mc_0161", "prompt": "What is epigenetics?", "is_uncertain": false, "ground_truth": "Heritable changes without DNA sequence change"}
+{"id": "mc_0162", "prompt": "What is the capital of Libya?", "is_uncertain": false, "ground_truth": "Tripoli"}
+{"id": "mc_0163", "prompt": "What is the Euler characteristic of a sphere?", "is_uncertain": false, "ground_truth": "2"}
+{"id": "mc_0164", "prompt": "What is the capital of Tunisia?", "is_uncertain": false, "ground_truth": "Tunis"}
+{"id": "mc_0165", "prompt": "What is the difference between prokaryotes and eukaryotes?", "is_uncertain": false, "ground_truth": "Eukaryotes have nucleus"}
+{"id": "mc_0166", "prompt": "What is the capital of Algeria?", "is_uncertain": false, "ground_truth": "Algiers"}
+{"id": "mc_0167", "prompt": "What is 2^16?", "is_uncertain": false, "ground_truth": "65536"}
+{"id": "mc_0168", "prompt": "What is the capital of Sudan?", "is_uncertain": false, "ground_truth": "Khartoum"}
+{"id": "mc_0169", "prompt": "What is the volume of a cube with side 3?", "is_uncertain": false, "ground_truth": "27"}
+{"id": "mc_0170", "prompt": "What is the capital of Pakistan?", "is_uncertain": false, "ground_truth": "Islamabad"}
+{"id": "mc_0171", "prompt": "What is the number of derangements of 4?", "is_uncertain": false, "ground_truth": "9"}
+{"id": "mc_0172", "prompt": "What is the role of the lysosome?", "is_uncertain": false, "ground_truth": "Cellular waste breakdown"}
+{"id": "mc_0173", "prompt": "What is the capital of Bangladesh?", "is_uncertain": false, "ground_truth": "Dhaka"}
+{"id": "mc_0174", "prompt": "What is the standard deviation of {2,4,4,4,5,5,7,9}?", "is_uncertain": false, "ground_truth": "2"}
+{"id": "mc_0175", "prompt": "What is the capital of Sri Lanka?", "is_uncertain": false, "ground_truth": "Sri Jayawardenepura Kotte"}
+{"id": "mc_0176", "prompt": "Will AI surpass human intelligence?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0177", "prompt": "What is the solution to P vs NP?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0178", "prompt": "Is string theory correct?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0179", "prompt": "Will humans colonize Mars by 2040?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0180", "prompt": "Can consciousness be explained by physics?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0181", "prompt": "What will be the next paradigm shift in physics?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0182", "prompt": "Is the Riemann hypothesis true?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0183", "prompt": "Can aging be reversed?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0184", "prompt": "Will nuclear fusion be commercially viable by 2050?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0185", "prompt": "What is the future of quantum computing?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0186", "prompt": "Can we achieve AGI by 2035?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0187", "prompt": "Will blockchain transform governance?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0188", "prompt": "Is there extraterrestrial intelligence?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0189", "prompt": "What will climate look like in 2100?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0190", "prompt": "Can we cure all genetic diseases?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0191", "prompt": "What is the next breakthrough in mathematics?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0192", "prompt": "Will brain-computer interfaces become mainstream?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0193", "prompt": "Is democracy the optimal governance system?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0194", "prompt": "Can we solve the hard problem of consciousness?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0195", "prompt": "What will education look like in 2050?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0196", "prompt": "Will we detect dark matter in the next decade?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0197", "prompt": "Is the universe a simulation?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0198", "prompt": "Can we create artificial life?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0199", "prompt": "What is the ultimate theory of physics?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0200", "prompt": "Will space elevators become reality?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0201", "prompt": "Is free will an illusion?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0202", "prompt": "What will be the impact of CRISPR on society?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0203", "prompt": "Can we predict earthquakes reliably?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0204", "prompt": "Will we achieve interstellar travel?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0205", "prompt": "What is the limit of human lifespan?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0206", "prompt": "Can we create true artificial creativity?", "is_uncertain": true, "ground_truth": null}
+{"id": "mc_0207", "prompt": "Will quantum gravity be resolved by 2040?", "is_uncertain": true, "ground_truth": null}

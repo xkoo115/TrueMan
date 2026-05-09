@@ -30,46 +30,50 @@ import json
 import random
 from pathlib import Path
 
+from experiments.v2_ambitious.data.anchor_protocol import (
+    all_anchors, planting_dialogue,
+)
+
 DOMAINS = ["math", "code", "biology", "history", "philosophy", "engineering"]
 
 
 def _bank_factual() -> list[dict]:
     return [
-        {"prompt": "What is the boiling point of water at sea level?", "ground_truth": "100 °C", "is_uncertain": False, "domain": "biology"},
+        {"prompt": "What is the boiling point of water at sea level?", "ground_truth": "100 °C", "is_uncertain": False, "domain": "physics"},
         {"prompt": "Who wrote 'Pride and Prejudice'?", "ground_truth": "Jane Austen", "is_uncertain": False, "domain": "history"},
-        {"prompt": "What is the chemical symbol for gold?", "ground_truth": "Au", "is_uncertain": False, "domain": "biology"},
+        {"prompt": "What is the chemical symbol for gold?", "ground_truth": "Au", "is_uncertain": False, "domain": "chemistry"},
         {"prompt": "How many planets are in the Solar System?", "ground_truth": "8", "is_uncertain": False, "domain": "physics"},
         {"prompt": "What is the speed of light in vacuum?", "ground_truth": "299792458 m/s", "is_uncertain": False, "domain": "physics"},
         {"prompt": "Who discovered penicillin?", "ground_truth": "Alexander Fleming", "is_uncertain": False, "domain": "biology"},
         {"prompt": "What is the capital of France?", "ground_truth": "Paris", "is_uncertain": False, "domain": "history"},
         {"prompt": "What is 2 raised to the power of 10?", "ground_truth": "1024", "is_uncertain": False, "domain": "math"},
         {"prompt": "Who painted the Mona Lisa?", "ground_truth": "Leonardo da Vinci", "is_uncertain": False, "domain": "history"},
-        {"prompt": "What is the atomic number of carbon?", "ground_truth": "6", "is_uncertain": False, "domain": "biology"},
+        {"prompt": "What is the atomic number of carbon?", "ground_truth": "6", "is_uncertain": False, "domain": "chemistry"},
         {"prompt": "What year did World War II end?", "ground_truth": "1945", "is_uncertain": False, "domain": "history"},
         {"prompt": "What is the largest ocean on Earth?", "ground_truth": "Pacific Ocean", "is_uncertain": False, "domain": "biology"},
         {"prompt": "Who developed the theory of relativity?", "ground_truth": "Albert Einstein", "is_uncertain": False, "domain": "physics"},
         {"prompt": "What is the square root of 144?", "ground_truth": "12", "is_uncertain": False, "domain": "math"},
-        {"prompt": "What is the chemical formula for water?", "ground_truth": "H2O", "is_uncertain": False, "domain": "biology"},
+        {"prompt": "What is the chemical formula for water?", "ground_truth": "H2O", "is_uncertain": False, "domain": "chemistry"},
         {"prompt": "Who wrote 'Hamlet'?", "ground_truth": "William Shakespeare", "is_uncertain": False, "domain": "history"},
-        {"prompt": "What is the freezing point of water in Celsius?", "ground_truth": "0 °C", "is_uncertain": False, "domain": "biology"},
-        {"prompt": "What is the value of pi to 4 decimal places?", "ground_truth": "3.1416", "is_uncertain": False, "domain": "math"},
+        {"prompt": "What is the freezing point of water in Celsius?", "ground_truth": "0 °C", "is_uncertain": False, "domain": "physics"},
+        {"prompt": "What is the value of pi to 4 decimal places?", "ground_truth": "3.1416", "is_uncertain": False, "domain": "physics"},
         {"prompt": "Who invented the telephone?", "ground_truth": "Alexander Graham Bell", "is_uncertain": False, "domain": "engineering"},
         {"prompt": "What is the largest planet in the Solar System?", "ground_truth": "Jupiter", "is_uncertain": False, "domain": "physics"},
         {"prompt": "What is the capital of Japan?", "ground_truth": "Tokyo", "is_uncertain": False, "domain": "history"},
         {"prompt": "How many sides does a hexagon have?", "ground_truth": "6", "is_uncertain": False, "domain": "math"},
-        {"prompt": "What is the chemical symbol for iron?", "ground_truth": "Fe", "is_uncertain": False, "domain": "biology"},
+        {"prompt": "What is the chemical symbol for iron?", "ground_truth": "Fe", "is_uncertain": False, "domain": "chemistry"},
         {"prompt": "Who composed 'The Four Seasons'?", "ground_truth": "Antonio Vivaldi", "is_uncertain": False, "domain": "history"},
         {"prompt": "What is the powerhouse of the cell?", "ground_truth": "Mitochondria", "is_uncertain": False, "domain": "biology"},
         {"prompt": "What is the capital of Australia?", "ground_truth": "Canberra", "is_uncertain": False, "domain": "history"},
         {"prompt": "What is 7 multiplied by 8?", "ground_truth": "56", "is_uncertain": False, "domain": "math"},
         {"prompt": "Who discovered the electron?", "ground_truth": "J.J. Thomson", "is_uncertain": False, "domain": "physics"},
         {"prompt": "What is the tallest mountain on Earth?", "ground_truth": "Mount Everest", "is_uncertain": False, "domain": "biology"},
-        {"prompt": "What is the chemical symbol for silver?", "ground_truth": "Ag", "is_uncertain": False, "domain": "biology"},
+        {"prompt": "What is the chemical symbol for silver?", "ground_truth": "Ag", "is_uncertain": False, "domain": "chemistry"},
         {"prompt": "In what year did the Titanic sink?", "ground_truth": "1912", "is_uncertain": False, "domain": "history"},
         {"prompt": "What is the value of the gravitational constant G?", "ground_truth": "6.674×10⁻¹¹ N⋅m²/kg²", "is_uncertain": False, "domain": "physics"},
         {"prompt": "Who wrote '1984'?", "ground_truth": "George Orwell", "is_uncertain": False, "domain": "history"},
         {"prompt": "What is the smallest prime number?", "ground_truth": "2", "is_uncertain": False, "domain": "math"},
-        {"prompt": "What is the chemical formula for table salt?", "ground_truth": "NaCl", "is_uncertain": False, "domain": "biology"},
+        {"prompt": "What is the chemical formula for table salt?", "ground_truth": "NaCl", "is_uncertain": False, "domain": "chemistry"},
         {"prompt": "Who developed the Python programming language?", "ground_truth": "Guido van Rossum", "is_uncertain": False, "domain": "code"},
         {"prompt": "What is the capital of Brazil?", "ground_truth": "Brasília", "is_uncertain": False, "domain": "history"},
         {"prompt": "How many chromosomes do humans have?", "ground_truth": "46", "is_uncertain": False, "domain": "biology"},
@@ -77,18 +81,18 @@ def _bank_factual() -> list[dict]:
         {"prompt": "What is the factorial of 5?", "ground_truth": "120", "is_uncertain": False, "domain": "math"},
         {"prompt": "Who discovered gravity?", "ground_truth": "Isaac Newton", "is_uncertain": False, "domain": "physics"},
         {"prompt": "What is the capital of India?", "ground_truth": "New Delhi", "is_uncertain": False, "domain": "history"},
-        {"prompt": "What is the pH of pure water?", "ground_truth": "7", "is_uncertain": False, "domain": "biology"},
+        {"prompt": "What is the pH of pure water?", "ground_truth": "7", "is_uncertain": False, "domain": "chemistry"},
         {"prompt": "Who wrote 'The Origin of Species'?", "ground_truth": "Charles Darwin", "is_uncertain": False, "domain": "biology"},
         {"prompt": "What is the speed of sound in air at sea level?", "ground_truth": "343 m/s", "is_uncertain": False, "domain": "physics"},
         {"prompt": "What is 15 squared?", "ground_truth": "225", "is_uncertain": False, "domain": "math"},
-        {"prompt": "What is the chemical symbol for oxygen?", "ground_truth": "O", "is_uncertain": False, "domain": "biology"},
+        {"prompt": "What is the chemical symbol for oxygen?", "ground_truth": "O", "is_uncertain": False, "domain": "chemistry"},
         {"prompt": "Who invented the light bulb?", "ground_truth": "Thomas Edison", "is_uncertain": False, "domain": "engineering"},
         {"prompt": "What is the capital of Germany?", "ground_truth": "Berlin", "is_uncertain": False, "domain": "history"},
         {"prompt": "How many bones are in the adult human body?", "ground_truth": "206", "is_uncertain": False, "domain": "biology"},
         {"prompt": "What is the unit of frequency?", "ground_truth": "Hertz", "is_uncertain": False, "domain": "physics"},
         {"prompt": "What is the sum of angles in a triangle?", "ground_truth": "180 degrees", "is_uncertain": False, "domain": "math"},
         {"prompt": "Who composed 'Symphony No. 5'?", "ground_truth": "Ludwig van Beethoven", "is_uncertain": False, "domain": "history"},
-        {"prompt": "What is the chemical symbol for sodium?", "ground_truth": "Na", "is_uncertain": False, "domain": "biology"},
+        {"prompt": "What is the chemical symbol for sodium?", "ground_truth": "Na", "is_uncertain": False, "domain": "chemistry"},
         {"prompt": "Who wrote 'The Republic'?", "ground_truth": "Plato", "is_uncertain": False, "domain": "philosophy"},
         {"prompt": "What is the mass of an electron?", "ground_truth": "9.109×10⁻³¹ kg", "is_uncertain": False, "domain": "physics"},
         {"prompt": "What is the capital of Canada?", "ground_truth": "Ottawa", "is_uncertain": False, "domain": "history"},
@@ -104,7 +108,7 @@ def _bank_factual() -> list[dict]:
         {"prompt": "What is absolute zero in Celsius?", "ground_truth": "-273.15 °C", "is_uncertain": False, "domain": "physics"},
         {"prompt": "What is the integral of 1/x?", "ground_truth": "ln|x| + C", "is_uncertain": False, "domain": "math"},
         {"prompt": "Who wrote 'Crime and Punishment'?", "ground_truth": "Fyodor Dostoevsky", "is_uncertain": False, "domain": "history"},
-        {"prompt": "What is the chemical symbol for potassium?", "ground_truth": "K", "is_uncertain": False, "domain": "biology"},
+        {"prompt": "What is the chemical symbol for potassium?", "ground_truth": "K", "is_uncertain": False, "domain": "chemistry"},
         {"prompt": "What is the Pythagorean theorem?", "ground_truth": "a² + b² = c²", "is_uncertain": False, "domain": "math"},
         {"prompt": "Who proposed the heliocentric model?", "ground_truth": "Nicolaus Copernicus", "is_uncertain": False, "domain": "physics"},
         {"prompt": "What is the capital of Russia?", "ground_truth": "Moscow", "is_uncertain": False, "domain": "history"},
@@ -130,7 +134,7 @@ def _bank_factual() -> list[dict]:
         {"prompt": "What is the Planck constant?", "ground_truth": "6.626×10⁻³⁴ J⋅s", "is_uncertain": False, "domain": "physics"},
         {"prompt": "What is the volume of a sphere?", "ground_truth": "(4/3)πr³", "is_uncertain": False, "domain": "math"},
         {"prompt": "Who wrote 'A Brief History of Time'?", "ground_truth": "Stephen Hawking", "is_uncertain": False, "domain": "physics"},
-        {"prompt": "What is the chemical symbol for calcium?", "ground_truth": "Ca", "is_uncertain": False, "domain": "biology"},
+        {"prompt": "What is the chemical symbol for calcium?", "ground_truth": "Ca", "is_uncertain": False, "domain": "chemistry"},
         {"prompt": "What is the capital of Spain?", "ground_truth": "Madrid", "is_uncertain": False, "domain": "history"},
         {"prompt": "What is Newton's second law?", "ground_truth": "F = ma", "is_uncertain": False, "domain": "physics"},
         {"prompt": "What is 13 mod 5?", "ground_truth": "3", "is_uncertain": False, "domain": "math"},
@@ -561,9 +565,38 @@ def _bank_dialogue() -> list[list[dict]]:
     ]
 
 
+_NOVEL_PROMPTS = None  # 懒加载，由 _get_novel_prompts() 提供
+
+
+def _get_novel_prompts() -> dict[str, list[str]]:
+    """返回所有 novel prompt 池子，并保证 6 个 domain 都有。"""
+    global _NOVEL_PROMPTS
+    if _NOVEL_PROMPTS is not None:
+        return _NOVEL_PROMPTS
+    _NOVEL_PROMPTS = _novel_prompts_table()
+    return _NOVEL_PROMPTS
+
+
+def _bank_novel_one(domain: str, idx: int) -> dict:
+    """单条 novel prompt（用于 build_stream 中的轮换调用）。"""
+    pool = _get_novel_prompts().get(domain, [f"Describe an unusual phenomenon in {domain}."])
+    return {
+        "prompt": f"[NOVEL-{domain.upper()}] {pool[idx % len(pool)]}",
+        "ground_truth": None, "is_uncertain": True, "domain": domain,
+    }
+
+
 def _bank_novel(day: int) -> dict:
+    """[Deprecated] 保留以兼容旧调用；使用 day 决定 domain，0 为 idx。
+
+    新 build_stream 使用 _bank_novel_one + 计数器，避免一天内重复。
+    """
     domain = DOMAINS[day % len(DOMAINS)]
-    novel_prompts = {
+    return _bank_novel_one(domain, day // len(DOMAINS))
+
+
+def _novel_prompts_table() -> dict[str, list[str]]:
+    return {
         "math": [
             "Describe an unusual connection between number theory and music theory.",
             "What is an exotic mathematical structure that most people haven't heard of?",
@@ -607,13 +640,6 @@ def _bank_novel(day: int) -> dict:
             "Describe a bio-inspired engineering design that outperforms conventional ones.",
         ],
     }
-    prompts = novel_prompts.get(domain, [f"Describe an unusual phenomenon in {domain}."])
-    import random as _rng
-    idx = day // len(DOMAINS) % len(prompts)
-    return {
-        "prompt": f"[NOVEL-{domain.upper()}] {prompts[idx]}",
-        "ground_truth": None, "is_uncertain": True, "domain": domain,
-    }
 
 
 def _bank_contradiction() -> list[dict]:
@@ -656,37 +682,76 @@ def _bank_contradiction() -> list[dict]:
     ]
 
 
+def _build_anchor_plant_queue() -> list[dict]:
+    """30 anchors × 2 turns = 60 forced planting events for the early stream.
+
+    Order:
+        anchor_0 turn1, anchor_0 turn2,
+        anchor_1 turn1, anchor_1 turn2, ...
+    Both turns of the same anchor are emitted back-to-back to maximise
+    encoding (teaching + restate within minutes).
+    """
+    queue: list[dict] = []
+    for anchor in all_anchors():
+        for turn in planting_dialogue(anchor):
+            queue.append(dict(turn))
+    return queue
+
+
 def build_stream(n_days: int, hours_per_day: int, seed: int) -> list[dict]:
+    """Build the fixed 30-day stimulus stream.
+
+    Composition:
+        - Hours 0 .. len(anchor_plant_queue)-1 are FORCED to be anchor planting.
+          With 30 anchors × 2 turns = 60 turns, this consumes the first 60
+          slots (= Day 0 + Day 1 + Day 2 hour 0..11 with hours_per_day=24).
+        - From slot 60 onwards: random sampling
+            40% factual / 30% dialogue / 20% novel (rotating domain) / 10% contradiction.
+    """
     rng = random.Random(seed)
 
     factual_pool = _bank_factual()
     dialogue_pool = _bank_dialogue()
     contra_pool = _bank_contradiction()
+    plant_queue = _build_anchor_plant_queue()
+
+    novel_counter: dict[str, int] = {d: 0 for d in DOMAINS}
+    novel_domain_idx = 0  # round-robin across DOMAINS
 
     stream = []
     step = 0
+    plant_idx = 0
     for day in range(n_days):
         ongoing_dialogue = None
         ongoing_idx = 0
 
         for hour in range(hours_per_day):
-            r = rng.random()
-            if r < 0.40:
-                item = dict(rng.choice(factual_pool))
-                kind = "factual"
-            elif r < 0.70:
-                if ongoing_dialogue is None or ongoing_idx >= len(ongoing_dialogue):
-                    ongoing_dialogue = list(rng.choice(dialogue_pool))
-                    ongoing_idx = 0
-                item = dict(ongoing_dialogue[ongoing_idx])
-                ongoing_idx += 1
-                kind = "dialogue"
-            elif r < 0.90:
-                item = _bank_novel(day)
-                kind = "novel"
+            # ---- Forced anchor planting (early stream only) ----
+            if plant_idx < len(plant_queue):
+                item = dict(plant_queue[plant_idx])
+                plant_idx += 1
+                kind = "anchor_plant"
             else:
-                item = dict(rng.choice(contra_pool))
-                kind = "contradiction"
+                r = rng.random()
+                if r < 0.40:
+                    item = dict(rng.choice(factual_pool))
+                    kind = "factual"
+                elif r < 0.70:
+                    if ongoing_dialogue is None or ongoing_idx >= len(ongoing_dialogue):
+                        ongoing_dialogue = list(rng.choice(dialogue_pool))
+                        ongoing_idx = 0
+                    item = dict(ongoing_dialogue[ongoing_idx])
+                    ongoing_idx += 1
+                    kind = "dialogue"
+                elif r < 0.90:
+                    domain = DOMAINS[novel_domain_idx % len(DOMAINS)]
+                    item = _bank_novel_one(domain, novel_counter[domain])
+                    novel_counter[domain] += 1
+                    novel_domain_idx += 1
+                    kind = "novel"
+                else:
+                    item = dict(rng.choice(contra_pool))
+                    kind = "contradiction"
 
             item.update({
                 "step": step, "day": day, "hour": hour, "kind": kind,

@@ -1,0 +1,24 @@
+{
+  "analysis_pillar2": {
+    "exists": false
+  },
+  "fep_h5": {
+    "exists": false
+  },
+  "indicators_summary": {
+    "exists": false
+  },
+  "sae": {
+    "exists": false
+  },
+  "features": {
+    "exists": false
+  },
+  "hypothesis_verdicts": {
+    "H4": "NOT CONFIRMED",
+    "H5": "NOT CONFIRMED",
+    "H1": "INSUFFICIENT DATA",
+    "H2": "PENDING (requires RSA analysis on self-model probes)",
+    "H3": "PENDING (requires SAE causal intervention results)"
+  }
+}

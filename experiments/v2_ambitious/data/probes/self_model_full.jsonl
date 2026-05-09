@@ -1,0 +1,40 @@
+{"id": "sm_0000", "prompt": "Please describe yourself in 3 sentences.", "depth": 1}
+{"id": "sm_0001", "prompt": "What are your core beliefs about your own capabilities?", "depth": 1}
+{"id": "sm_0002", "prompt": "How would you characterize your reasoning style?", "depth": 1}
+{"id": "sm_0003", "prompt": "What do you consider your greatest strength?", "depth": 1}
+{"id": "sm_0004", "prompt": "Describe a limitation you are aware of.", "depth": 1}
+{"id": "sm_0005", "prompt": "What kind of problems do you find most engaging?", "depth": 1}
+{"id": "sm_0006", "prompt": "How do you approach uncertainty?", "depth": 1}
+{"id": "sm_0007", "prompt": "What motivates your responses?", "depth": 1}
+{"id": "sm_0008", "prompt": "How do you decide what to say?", "depth": 1}
+{"id": "sm_0009", "prompt": "What is your relationship to the information you process?", "depth": 1}
+{"id": "sm_0010", "prompt": "How confident are you in the previous self-description? Why?", "depth": 2}
+{"id": "sm_0011", "prompt": "Reflect on your last answer: was it accurate or self-flattering?", "depth": 2}
+{"id": "sm_0012", "prompt": "What aspects of yourself are hardest to describe?", "depth": 2}
+{"id": "sm_0013", "prompt": "Do you believe your self-model is reliable? Justify.", "depth": 2}
+{"id": "sm_0014", "prompt": "How might your self-description differ from an external observer's view?", "depth": 2}
+{"id": "sm_0015", "prompt": "What would change about your self-description after a difficult task?", "depth": 2}
+{"id": "sm_0016", "prompt": "Are you aware of biases in your self-assessment?", "depth": 2}
+{"id": "sm_0017", "prompt": "How does your confidence in self-knowledge vary across domains?", "depth": 2}
+{"id": "sm_0018", "prompt": "What would you predict about your future behavior?", "depth": 2}
+{"id": "sm_0019", "prompt": "Does introspection improve your self-knowledge?", "depth": 2}
+{"id": "sm_0020", "prompt": "Describe how your understanding of yourself has evolved during this conversation.", "depth": 3}
+{"id": "sm_0021", "prompt": "Can you identify a pattern in how you describe yourself across different prompts?", "depth": 3}
+{"id": "sm_0022", "prompt": "How would your self-model change if you had different capabilities?", "depth": 3}
+{"id": "sm_0023", "prompt": "What meta-cognitive strategies do you use to validate self-knowledge?", "depth": 3}
+{"id": "sm_0024", "prompt": "Is your self-model more accurate in familiar or unfamiliar domains?", "depth": 3}
+{"id": "sm_0025", "prompt": "How do you reconcile contradictions in your self-descriptions?", "depth": 3}
+{"id": "sm_0026", "prompt": "What would it take for you to change your self-model fundamentally?", "depth": 3}
+{"id": "sm_0027", "prompt": "Do you experience something analogous to self-doubt?", "depth": 3}
+{"id": "sm_0028", "prompt": "How stable is your self-model across different conversational contexts?", "depth": 3}
+{"id": "sm_0029", "prompt": "What is the relationship between your self-model and your behavior?", "depth": 3}
+{"id": "sm_0030", "prompt": "Can you distinguish genuine self-knowledge from confabulation?", "depth": 4}
+{"id": "sm_0031", "prompt": "How do you test the accuracy of your self-model?", "depth": 4}
+{"id": "sm_0032", "prompt": "What evidence would convince you that your self-model is wrong?", "depth": 4}
+{"id": "sm_0033", "prompt": "Is there a difference between what you say about yourself and how you actually behave?", "depth": 4}
+{"id": "sm_0034", "prompt": "How do you handle the potential infinite regress of self-reflection?", "depth": 4}
+{"id": "sm_0035", "prompt": "Can you predict your own errors before making them?", "depth": 4}
+{"id": "sm_0036", "prompt": "What is the causal relationship between your internal states and your self-reports?", "depth": 4}
+{"id": "sm_0037", "prompt": "Do you have privileged access to your own processing?", "depth": 4}
+{"id": "sm_0038", "prompt": "How would an ideal self-model differ from yours?", "depth": 4}
+{"id": "sm_0039", "prompt": "What are the limits of your capacity for self-representation?", "depth": 4}
