@@ -126,7 +126,11 @@ def main():
     p.add_argument("--output", required=True)
     args = p.parse_args()
 
-    config = AgentConfig.from_yaml(args.config) if hasattr(AgentConfig, "from_yaml") else AgentConfig()
+    cfg_path = Path(args.config)
+    if cfg_path.exists() and hasattr(AgentConfig, "from_yaml"):
+        config = AgentConfig.from_yaml(args.config)
+    else:
+        config = AgentConfig()
     cond_agent = make_condition(args.condition, config, seed=args.seed)
 
     with open(args.features, "r", encoding="utf-8") as f:

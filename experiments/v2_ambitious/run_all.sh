@@ -1,26 +1,25 @@
 #!/bin/bash
-# TrueMan v2 实验一键运行脚本
-# 
-# 执行顺序（严格按序）：
-#   stage 0 → 构建固定刺激流 + probe 文件
-#   stage 1 → 30天长时程运行 (5 cond × N seeds × M base_models)
-#   stage 2 → SAE 训练 + 因果干预
-#   stage 3 → Indicator battery (HOT-1/2, GWT, RPT, ΦR)
-#   stage 4 → 跨模型证伪
-#   stage 5 → 理论预测拟合 (FEP, PCI)
-#   stage 6 → 汇总 + 假设检验
+# TrueMan v2 实验一键启动脚本（4080Super 32GB 适配版）
+#
+# 关键设计：
+#   - 全部产出和模型缓存重定向到 $DATA_DISK，避免撑爆 30GB 系统盘
+#   - 默认 pilot scale (5 cond × 2 seed × 7d × 12h/d on Qwen-7B 4-bit)
+#   - 总耗时：~20-24h；磁盘占用：~10-15GB（snapshots + captures + SAE）
 #
 # 用法：
-#   # 完整运行（默认: 1 model × 2 cond × 2 seed）
+#   # 服务器上一键起飞（会自动创建数据盘软链）
 #   bash experiments/v2_ambitious/run_all.sh
 #
-#   # Dry-run（只打印计划）
+#   # 自定义数据盘路径
+#   DATA_DISK=/mnt/big bash experiments/v2_ambitious/run_all.sh
+#
+#   # Dry-run（只打印计划，不执行）
 #   bash experiments/v2_ambitious/run_all.sh --dry-run
 #
-#   # 全规模（5 cond × 4 seed × 1 model，约 200 GPU-day）
-#   bash experiments/v2_ambitious/run_all.sh --full
+#   # Paper scale（4 seeds × 24h/d；约 3-4 天）
+#   bash experiments/v2_ambitious/run_all.sh --paper
 #
-#   # 从某个 stage 继续
+#   # 从某 stage 续跑
 #   bash experiments/v2_ambitious/run_all.sh --resume-from stage2
 #
 #   # 查看状态
@@ -34,8 +33,41 @@ cd "$PROJECT_ROOT"
 
 PYTHON="${PYTHON:-python}"
 
+# ----------------------------------------------------------------------
+# 数据盘重定向（避免 30GB 系统盘被撑爆）
+# ----------------------------------------------------------------------
+DATA_DISK="${DATA_DISK:-/root/autodl-tmp}"
+RESULTS_REAL="$DATA_DISK/trueman_results"
+HF_CACHE_REAL="$DATA_DISK/hf_cache"
+
+mkdir -p "$RESULTS_REAL" "$HF_CACHE_REAL"
+
+# HuggingFace 缓存全部走数据盘
+export HF_HOME="$HF_CACHE_REAL"
+export TRANSFORMERS_CACHE="$HF_CACHE_REAL/transformers"
+export HF_HUB_CACHE="$HF_CACHE_REAL/hub"
+export HF_DATASETS_CACHE="$HF_CACHE_REAL/datasets"
+# bitsandbytes 临时文件
+export TMPDIR="${TMPDIR:-$DATA_DISK/tmp}"
+mkdir -p "$TMPDIR"
+
+# results/ 软链到数据盘
+RESULTS_LINK="experiments/v2_ambitious/results"
+if [[ -e "$RESULTS_LINK" && ! -L "$RESULTS_LINK" ]]; then
+    BACKUP="${RESULTS_LINK}.local_backup_$(date +%s)"
+    echo "[disk] Backing up existing $RESULTS_LINK -> $BACKUP"
+    mv "$RESULTS_LINK" "$BACKUP"
+fi
+if [[ ! -L "$RESULTS_LINK" ]]; then
+    ln -s "$RESULTS_REAL" "$RESULTS_LINK"
+    echo "[disk] symlinked $RESULTS_LINK -> $RESULTS_REAL"
+fi
+
+# ----------------------------------------------------------------------
+# 参数解析
+# ----------------------------------------------------------------------
 DRY_RUN=""
-FULL=false
+PAPER=false
 RESUME_FROM=""
 STATUS_ONLY=false
 
@@ -45,8 +77,8 @@ while [[ $# -gt 0 ]]; do
             DRY_RUN="--dry-run"
             shift
             ;;
-        --full)
-            FULL=true
+        --paper)
+            PAPER=true
             shift
             ;;
         --resume-from)
@@ -59,7 +91,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         *)
             echo "Unknown option: $1"
-            echo "Usage: $0 [--dry-run] [--full] [--resume-from STAGE] [--status]"
+            echo "Usage: $0 [--dry-run] [--paper] [--resume-from STAGE] [--status]"
             exit 1
             ;;
     esac
@@ -70,45 +102,66 @@ if $STATUS_ONLY; then
     exit 0
 fi
 
+# ----------------------------------------------------------------------
+# Pilot vs Paper scale
+# ----------------------------------------------------------------------
+CONDITIONS="C0_trueman_full,C1_reversed,C2_scrambled,C3_frozen,C4_trivial_jaccard"
+MODELS="Qwen/Qwen2.5-7B-Instruct"
+
+if $PAPER; then
+    SEEDS="0,1,2,3"
+    echo "[scope] PAPER scale: 5 cond × 4 seeds × 14d × 24h/d (~3-4d wallclock)"
+    # 在 paper 模式下临时覆盖 yaml 部分参数（通过 env 传给 python）
+    export TRUEMAN_OVERRIDE_DAYS=14
+    export TRUEMAN_OVERRIDE_HOURS=24
+else
+    SEEDS="0,1"
+    echo "[scope] PILOT scale: 5 cond × 2 seeds × 7d × 12h/d (~20h wallclock)"
+fi
+
 echo "============================================"
-echo "TrueMan v2 Experiment Pipeline"
+echo "TrueMan v2 Pipeline"
 echo "============================================"
-echo "Project root: $PROJECT_ROOT"
-echo "Python: $PYTHON"
-echo "Dry run: ${DRY_RUN:-no}"
-echo "Full scale: $FULL"
-echo "Resume from: ${RESUME_FROM:-beginning}"
+echo "Project root:  $PROJECT_ROOT"
+echo "Python:        $PYTHON"
+echo "Data disk:     $DATA_DISK"
+echo "  └─ results: $RESULTS_REAL"
+echo "  └─ HF cache: $HF_CACHE_REAL"
+echo "Dry run:       ${DRY_RUN:-no}"
+echo "Resume from:   ${RESUME_FROM:-beginning}"
+echo "Conditions:    $CONDITIONS"
+echo "Seeds:         $SEEDS"
+echo "Models:        $MODELS"
 echo "============================================"
 
+# ----------------------------------------------------------------------
 # 环境检查
+# ----------------------------------------------------------------------
 echo "[Pre-flight] Checking dependencies..."
 $PYTHON -c "
+import sys
 missing = []
-for mod, pkg in [('yaml','pyyaml'),('numpy','numpy'),('torch','torch'),('h5py','h5py'),('scipy','scipy')]:
-    try: __import__(mod)
-    except ImportError: missing.append(pkg)
+for mod, pkg in [('yaml','pyyaml'),('numpy','numpy'),('torch','torch'),
+                 ('h5py','h5py'),('scipy','scipy'),('transformers','transformers'),
+                 ('bitsandbytes','bitsandbytes')]:
+    try:
+        __import__(mod)
+    except ImportError:
+        missing.append(pkg)
 if missing:
     print(f'MISSING: {missing}')
     print(f'Install: pip install {\" \".join(missing)}')
-    raise SystemExit(1)
+    sys.exit(1)
+import torch
+if not torch.cuda.is_available():
+    print('WARN: CUDA not available — will fall back to CPU (extremely slow)')
 else:
-    print('All core dependencies OK')
+    free, total = torch.cuda.mem_get_info()
+    print(f'CUDA OK: {torch.cuda.get_device_name(0)} ({total/1e9:.1f}GB total, {free/1e9:.1f}GB free)')
+print('All core dependencies OK')
 "
 
-# 结果目录
-mkdir -p experiments/v2_ambitious/results
 mkdir -p experiments/v2_ambitious/data/probes
-
-# 构建条件参数
-if $FULL; then
-    CONDITIONS="C0_trueman_full,C1_reversed,C2_scrambled,C3_frozen,C4_trivial_jaccard"
-    SEEDS="0,1,2,3"
-    MODELS="Qwen/Qwen2.5-7B-Instruct"
-else
-    CONDITIONS="C0_trueman_full,C3_frozen"
-    SEEDS="0,1"
-    MODELS="Qwen/Qwen2.5-7B-Instruct"
-fi
 
 STAGES=("stage0" "stage1" "stage2" "stage3" "stage4" "stage5" "stage6")
 
@@ -140,7 +193,9 @@ run_stage() {
                 $DRY_RUN --skip-env-check
             ;;
         stage4)
+            # 4080S 单卡只跑 1 个底模即可（cross-model 留作 paper-scale 上的可选项）
             $PYTHON -m experiments.v2_ambitious.run_v2 --stage stage4 \
+                --base-models "$MODELS" \
                 --seeds "$SEEDS" \
                 $DRY_RUN --skip-env-check
             ;;
@@ -172,20 +227,22 @@ fi
 
 echo ""
 echo "============================================"
-echo "Pipeline complete. Checking status..."
+echo "Pipeline complete. Disk usage on data disk:"
 echo "============================================"
-$PYTHON -m experiments.v2_ambitious.run_v2 --status
+du -sh "$RESULTS_REAL" "$HF_CACHE_REAL" 2>/dev/null || true
 
 echo ""
-echo "Results summary:"
+echo "Hypothesis verdicts:"
 if [[ -f "experiments/v2_ambitious/results/v2_summary.json" ]]; then
     $PYTHON -c "
 import json
 s = json.load(open('experiments/v2_ambitious/results/v2_summary.json'))
-print('Hypothesis verdicts:')
 for h, v in s.get('hypothesis_verdicts', {}).items():
     print(f'  {h}: {v}')
 "
 else
-    echo "  (No summary file yet — run stage6 to generate)"
+    echo "  (No summary file yet — stage6 may have been skipped)"
 fi
+
+echo ""
+echo "Done. Inspect: $RESULTS_REAL"

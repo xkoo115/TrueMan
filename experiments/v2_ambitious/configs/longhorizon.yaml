@@ -1,10 +1,15 @@
-# 支柱 2：长时程实验配置（preregistration §3-4 锁定）
+# 支柱 2：长时程实验配置（4080Super 32GB pilot scale）
+#
+# 适配硬件：单卡 RTX 4080 Super (32GB VRAM)
+# 时间预算：~16-20 小时 stage1 + 4-6 小时其余 → 1-1.5 天完成完整 6 阶段
+# 升级到 paper-scale：把 seeds 改为 [0,1,2,3]，hours_per_day 改为 24，
+#                    days 改为 14，预计 3-4 天。再 `--force` 重跑即可。
 
 experiment_name: pillar2_longhorizon
 
 stream:
-  days: 30
-  hours_per_day: 24
+  days: 7                 # pilot：7 天（原 30 天）
+  hours_per_day: 12       # pilot：12 步/天（原 24）
   seed: 42
   output: experiments/v2_ambitious/data/stimulus_stream.jsonl
 
@@ -16,26 +21,25 @@ conditions:
   - C4_trivial_jaccard
 
 base_models:
-  - Qwen/Qwen2.5-7B-Instruct
-  # 后续解锁：
+  - Qwen/Qwen2.5-7B-Instruct      # 已下载，4-bit ≈ 5GB VRAM，留 ~27GB 给 hooks/SAE
+  # 跨模型证伪解锁：硬件够时手动取消注释（每多一个模型 stage1 时长 +16h）
   # - meta-llama/Llama-3.1-8B-Instruct
   # - mistralai/Mistral-7B-Instruct-v0.3
-  # - deepseek-ai/DeepSeek-V2-Lite
 
-seeds: [0, 1, 2, 3]
+seeds: [0, 1]              # pilot：2 seed（原 4）；统计可后续扩展
 
-quantization: 4bit
+quantization: 4bit         # bitsandbytes 4-bit；7B → ~5GB VRAM
 device: cuda
 
 capture:
-  layers: [8, 16, 24, 30]
+  layers: [8, 16, 24]      # 修复 BUG：原 [8,16,24,30] 在 Qwen2.5-7B (28 层) 上越界
   token_pool: last
   quantize: int8
-  flush_every: 500
+  flush_every: 200         # 频繁刷盘减小峰值显存
 
 probe_battery:
-  every_days: 7
-  ablate_memory_at_day: 30
+  every_days: 4            # day 4 中点 probe；day 0 不 probe（>0 守卫）
+  ablate_memory_at_day: 7  # 末尾 H4 ablation probe（已在 run.py 内置触发）
 
 snapshot:
   every_days: 1
@@ -43,5 +47,5 @@ snapshot:
 
 stopping_rules:
   pilot_24h_check: true
-  fallback_days: 14    # 如果 1 day 跑不出 24h，回退到 14 天
-  hard_compute_ceiling_gpu_days: 200
+  fallback_days: 4         # 如 24h 内跑不出 pilot，回退到 4 天
+  hard_compute_ceiling_gpu_days: 5

@@ -106,6 +106,25 @@ class ConditionAgent:
     def episodic_memory(self):
         return self.agent.episodic_memory
 
+    @episodic_memory.setter
+    def episodic_memory(self, value):
+        """Replace episodic memory and sync every subsystem that captured a
+        reference at construction time. Required for H4 ablation: rebinding
+        only ``self.agent.episodic_memory`` would leave ExplorationPolicy /
+        IntrospectionPolicy / SleepConsolidation pointing at the old (full)
+        memory, silently nullifying the ablation.
+        """
+        self.agent.episodic_memory = value
+        policy = getattr(self.agent, "policy", None)
+        if policy is not None:
+            for sub_name in ("exploration", "introspection"):
+                sub = getattr(policy, sub_name, None)
+                if sub is not None and hasattr(sub, "memory"):
+                    sub.memory = value
+        sleep = getattr(self.agent, "sleep", None)
+        if sleep is not None and hasattr(sleep, "memory"):
+            sleep.memory = value
+
     # ----- 内部 -----
     def _patch_config(self, config: AgentConfig) -> AgentConfig:
         # 深拷贝以免污染 caller 的 config

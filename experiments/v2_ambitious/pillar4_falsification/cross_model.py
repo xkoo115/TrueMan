@@ -14,7 +14,7 @@ import subprocess
 from pathlib import Path
 
 
-BASE_MODELS = [
+DEFAULT_BASE_MODELS = [
     "Qwen/Qwen2.5-7B-Instruct",
     "meta-llama/Llama-3.1-8B-Instruct",
     "mistralai/Mistral-7B-Instruct-v0.3",
@@ -26,17 +26,24 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--seeds", nargs="*", type=int, default=[0, 1, 2, 3])
     p.add_argument("--days", type=int, default=30)
+    p.add_argument("--hours-per-day", type=int, default=24)
+    p.add_argument("--base-models", nargs="*", default=DEFAULT_BASE_MODELS,
+                   help="覆盖底模列表（论文级 4 模型；4080S 受限只跑 1 个）")
+    p.add_argument("--conditions", nargs="*", default=None,
+                   help="覆盖条件子集；默认全部 5 个")
     p.add_argument("--output", default="experiments/v2_ambitious/results/cross_model")
     p.add_argument("--dry-run", action="store_true")
     args = p.parse_args()
+    BASE_MODELS = args.base_models
 
     out_root = Path(args.output)
     out_root.mkdir(parents=True, exist_ok=True)
 
     plan = []
     from experiments.v2_ambitious.harness.conditions import all_conditions
+    conditions = args.conditions or all_conditions()
     for model in BASE_MODELS:
-        for cond in all_conditions():
+        for cond in conditions:
             for seed in args.seeds:
                 plan.append({"model": model, "condition": cond, "seed": seed})
 
@@ -50,14 +57,16 @@ def main():
         return
 
     # 实际执行：依赖 pillar2_longhorizon.run.py
+    import sys
     for job in plan:
         cmd = [
-            "python", "-m", "experiments.v2_ambitious.pillar2_longhorizon.run",
+            sys.executable, "-m", "experiments.v2_ambitious.pillar2_longhorizon.run",
             "--condition", job["condition"],
             "--base-model", job["model"],
             "--seed", str(job["seed"]),
             "--stream", "experiments/v2_ambitious/data/stimulus_stream.jsonl",
             "--days", str(args.days),
+            "--hours-per-day", str(args.hours_per_day),
             "--output", str(out_root / "longhorizon"),
         ]
         print(f"[Cross] Running: {' '.join(cmd)}")

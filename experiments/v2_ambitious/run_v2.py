@@ -33,12 +33,28 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import subprocess
 import sys
 import time
 from pathlib import Path
 
 import yaml
+
+
+def _apply_env_overrides(cfg: dict) -> dict:
+    """Allow run_all.sh's --paper / --pilot to bump scope without yaml edits."""
+    days = os.environ.get("TRUEMAN_OVERRIDE_DAYS")
+    hours = os.environ.get("TRUEMAN_OVERRIDE_HOURS")
+    seeds = os.environ.get("TRUEMAN_OVERRIDE_SEEDS")
+    if "stream" in cfg:
+        if days:
+            cfg["stream"]["days"] = int(days)
+        if hours:
+            cfg["stream"]["hours_per_day"] = int(hours)
+    if seeds:
+        cfg["seeds"] = [int(s) for s in seeds.split(",") if s.strip()]
+    return cfg
 
 ROOT = Path(__file__).resolve().parent
 PYTHON = sys.executable
@@ -235,12 +251,17 @@ def stage3_indicators(args, ind_cfg) -> None:
 
 
 def stage4_falsification(args, cfg) -> None:
-    _run([
+    cmd = [
         PYTHON, "-m", "experiments.v2_ambitious.pillar4_falsification.cross_model",
         "--seeds", *map(str, args.seeds or cfg.get("seeds", [0, 1, 2, 3])),
         "--days", str(cfg["stream"]["days"]),
+        "--hours-per-day", str(cfg["stream"]["hours_per_day"]),
         "--output", "experiments/v2_ambitious/results/cross_model",
-    ], dry=args.dry_run, label="stage4: cross-model falsification")
+    ]
+    base_models = args.base_models or cfg.get("base_models")
+    if base_models:
+        cmd += ["--base-models", *base_models]
+    _run(cmd, dry=args.dry_run, label="stage4: cross-model falsification")
 
 
 def stage5_theory(args, cfg) -> None:
@@ -432,7 +453,9 @@ def main():
             parts = [x.strip() for x in v.split(",") if x.strip()]
             setattr(args, k, [int(p) if p.isdigit() else p for p in parts])
 
-    lh_cfg = yaml.safe_load(Path(args.longhorizon_config).read_text(encoding="utf-8"))
+    lh_cfg = _apply_env_overrides(
+        yaml.safe_load(Path(args.longhorizon_config).read_text(encoding="utf-8"))
+    )
     mech_cfg = yaml.safe_load(Path(args.mechanistic_config).read_text(encoding="utf-8"))
     ind_cfg = yaml.safe_load(Path(args.indicators_config).read_text(encoding="utf-8"))
 

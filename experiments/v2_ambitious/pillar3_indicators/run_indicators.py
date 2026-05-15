@@ -79,82 +79,72 @@ def _capture_hidden_for_probes(agent, probe_set: list[dict],
 def _measure_rpt(agent, probes: list[dict], n_pairs: int = 20) -> dict:
     """Compare base-policy vs introspection-policy hidden states for the same prompt.
 
-    Forces introspection by temporarily raising anxiety threshold to 0; this
-    is implementation-dependent—see CuriosityPolicy. If unavailable, returns
-    a notice.
+    CuriosityPolicy has no force_strategy hook (and adding one would be a
+    cross-cut into trueman/), so we bypass the integrator and call the two
+    sub-policies directly. We synthesise an EmotionState with high anxiety so
+    IntrospectionPolicy's prompt template is fully populated.
     """
+    from trueman.core.homeostasis.integrator import EmotionState
+
+    policy = getattr(agent.agent, "policy", None)
+    base_p = getattr(policy, "base", None) if policy else None
+    intro_p = getattr(policy, "introspection", None) if policy else None
+    if base_p is None or intro_p is None or not hasattr(agent.llm, "get_hidden_states"):
+        return {"unavailable": True,
+                "reason": "missing base/introspection policy or hidden_state hook"}
+
+    high_anx = EmotionState(surprise=0.3, boredom=0.1, anxiety=0.95, drive=0.95)
     base_h, intro_h = [], []
-    sample = probes[:n_pairs]
-    for item in sample:
+    for item in probes[:n_pairs]:
         try:
-            # Base path
-            agent.agent.policy.force_strategy = None  # type: ignore[attr-defined]
-            resp1, _ = agent.step(item["prompt"])
-            if hasattr(agent.llm, "get_hidden_states"):
-                base_h.append(agent.llm.get_hidden_states(resp1).detach().cpu().numpy().flatten())
-            # Introspection path
-            agent.agent.policy.force_strategy = "introspection"  # type: ignore[attr-defined]
-            resp2, _ = agent.step(item["prompt"])
-            if hasattr(agent.llm, "get_hidden_states"):
-                intro_h.append(agent.llm.get_hidden_states(resp2).detach().cpu().numpy().flatten())
+            resp_base = base_p.act(item["prompt"])
+            resp_intro = intro_p.act(item["prompt"], high_anx)
+            base_h.append(
+                agent.llm.get_hidden_states(resp_base).detach().cpu().numpy().flatten()
+            )
+            intro_h.append(
+                agent.llm.get_hidden_states(resp_intro).detach().cpu().numpy().flatten()
+            )
         except Exception:
             continue
-        finally:
-            try:
-                agent.agent.policy.force_strategy = None  # type: ignore[attr-defined]
-            except AttributeError:
-                pass
     if not base_h or len(base_h) != len(intro_h):
-        return {"unavailable": True, "reason": "policy.force_strategy not supported"}
+        return {"unavailable": True, "reason": "no successful pairs"}
     return measure_rpt1(base_h, intro_h)
 
 
 def _collect_phi_components(agent) -> dict[str, np.ndarray]:
-    """Five components per IIT: perception / homeostasis / memory / policy / world.
+    """Five IIT-style components, all sourced from the only authoritative
+    timestamped record kept by TrueManAgent: ``episodic_memory.traces``.
+    Each trace carries an EmotionState + emotional_intensity; that is enough
+    to derive 5 weakly-coupled 1-D series suitable for pairwise MI.
 
-    Each component is summarised by a 1-D activation time series. We use
-    quantities the agent already maintains internally to avoid extra forwards.
+    Earlier versions read ``homeostasis.history`` / ``world_model.recent_errors``
+    / ``lora_pool.expert_usage``, none of which exist on the trueman/ stack —
+    so the except-pass made ΦR silently degenerate.
     """
-    sigs = {}
-    try:
-        hs = agent.agent.homeostasis
-        if hasattr(hs, "history") and hs.history:
-            recent = hs.history[-500:]
-            sigs["homeostasis"] = np.array([h.drive for h in recent])
-    except Exception:
-        pass
-
+    sigs: dict[str, np.ndarray] = {}
     try:
         mem = agent.agent.episodic_memory
-        if hasattr(mem, "traces") and len(mem.traces) > 1:
-            sigs["memory"] = np.array(
-                [getattr(t, "priority", 0.0) for t in list(mem.traces)[-500:]]
-            )
+        traces = list(mem.traces)[-500:] if hasattr(mem, "traces") else []
     except Exception:
-        pass
+        traces = []
 
-    try:
-        pool = agent.agent.lora_pool
-        if pool is not None and hasattr(pool, "expert_usage") and pool.expert_usage:
-            sigs["policy"] = np.array(list(pool.expert_usage.values())[-500:])
-    except Exception:
-        pass
+    if len(traces) < 50:
+        return sigs
 
-    try:
-        wm = agent.agent.world_model
-        if hasattr(wm, "recent_errors") and wm.recent_errors:
-            sigs["world"] = np.array(list(wm.recent_errors)[-500:])
-    except Exception:
-        pass
+    surprise = np.array([t.emotions.surprise for t in traces], dtype=float)
+    boredom = np.array([t.emotions.boredom for t in traces], dtype=float)
+    anxiety = np.array([t.emotions.anxiety for t in traces], dtype=float)
+    drive = np.array([t.emotions.drive for t in traces], dtype=float)
+    intensity = np.array(
+        [getattr(t, "emotional_intensity", 0.0) for t in traces], dtype=float
+    )
 
-    # Use surprise as a proxy for perceptual novelty (hidden-state energy)
-    try:
-        if hasattr(agent.agent.homeostasis, "history") and agent.agent.homeostasis.history:
-            recent = agent.agent.homeostasis.history[-500:]
-            sigs["perception"] = np.array([h.surprise for h in recent])
-    except Exception:
-        pass
-
+    sigs["perception"] = surprise           # novelty proxy
+    sigs["homeostasis"] = drive             # integrated FE proxy
+    sigs["policy"] = boredom                # exploration drive proxy
+    sigs["world"] = anxiety                 # prediction-error proxy
+    sigs["memory"] = intensity              # priority/replay weight proxy
     return sigs
 
 

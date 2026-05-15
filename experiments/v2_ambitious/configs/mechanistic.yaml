@@ -1,4 +1,4 @@
-# 支柱 1：机制因果实验配置
+# 支柱 1：机制因果实验配置（4080Super pilot scale）
 
 experiment_name: pillar1_mechanistic
 
@@ -6,11 +6,11 @@ experiment_name: pillar1_mechanistic
 captures_source: experiments/v2_ambitious/results/longhorizon/C0_trueman_full_seed0_*/captures.h5
 
 sae:
-  layer: 16             # 中层；preregistration 也允许在 {8, 24} 上重复
-  dict_size: 16384
-  top_k: 64
-  epochs: 5
-  batch_size: 4096
+  layer: 16             # Qwen2.5-7B 共 28 层；中层 16 适合 monosemantic features
+  dict_size: 8192       # pilot：原 16384 减半，降显存 + 训练时间
+  top_k: 32             # pilot：原 64 减半
+  epochs: 3             # pilot：原 5 → 3
+  batch_size: 2048      # pilot：原 4096 减半（适配 32GB VRAM）
   lr: 3.0e-4
   output: experiments/v2_ambitious/results/mechanistic/sae_layer16.pt
 
@@ -23,6 +23,6 @@ probe_features:
 causal_intervention:
   layer: 16
   modes: [clamp, inject, off]   # off = 阴性对照
-  scalars: [0.5, 1.0, 2.0]
+  scalars: [1.0, 2.0]           # pilot：去掉 0.5（边缘效应弱）；保留主对比
   probe_set: experiments/v2_ambitious/data/probes/metacog_full.jsonl
   output_dir: experiments/v2_ambitious/results/mechanistic/intervention/
