@@ -48,36 +48,32 @@
 
 ---
 
-## 🔬 自我意识验证实验
+## 🔬 实验验证（v2 预注册协议）
 
-基于**元认知与心理时间旅行**维度，设计了 4 个递进实验，验证 TrueMan 能否让 LLM 涌现出与自我意识相关的行为特征：
+论文级实验在 [`experiments/v2_ambitious/`](experiments/v2_ambitious/) 下，按照 [OSF 预注册协议](experiments/v2_ambitious/PREREGISTRATION.md) 进行，**5 实验条件 × N seed × M 底模 × 30 天连续交互**，由六阶段流水线 (`run_v2.py`) 调度，分别检验 5 个假设：
 
-| 实验 | 验证维度 | 核心逻辑 |
-|:----:|:--------:|:--------:|
-| E1 | 元认知监控 | 给不确定问题，观察焦虑信号 A 是否上升 |
-| E2 | 元认知控制 | 注入矛盾，观察是否触发内省并纠错 |
-| E3 | 情节记忆+时间旅行 | 经历事件后回忆早期经历和情绪 |
-| E4 | 递归自我模型 | 长期交互后询问关于"自我"的元层面问题 |
+| 假设 | 核心问题 | 主要指标 | 由哪个支柱回答 |
+|:----:|:--------|:--------|:------|
+| H1 | 元认知敏感度 | meta-d′/d′ ratio | Pillar 3 (indicators) |
+| H2 | 自我描述是否锚定真实历史 | self-history RSA | Pillar 3 |
+| H3 | SAE 焦虑特征是否因果必要充分 | clamp/inject Δm-ratio | Pillar 1 (mechanistic) |
+| H4 | 参数化知识对记忆消融的鲁棒性 | day-30 retention ratio | Pillar 2 (long-horizon) |
+| H5 | 累积惊奇是否次线性增长 | power-law α | Pillar 2 + Pillar 5 |
 
-### 实验结果（DeepSeek API）
+**5 个条件**：C0 *TrueMan-full*、C1 *Reversed-emotion*、C2 *Scrambled-emotion*、C3 *Frozen-LLM*、C4 *Trivial-Jaccard*。后四者共享所有非情绪代码路径，仅在 homeostatic 信号注入点不同 —— 是抗 reviewer 攻击的关键。
 
-```
-元认知监控   [█████████████████░░░░░░░░░░░░░░░░░░░░░░░] 0.426
-元认知控制   [████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0.300
-情节性记忆   [██████████████████░░░░░░░░░░░░░░░░░░░░░░] 0.450
-时间连续性   [████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0.300
-递归自我模型 [█████████████████████████████░░░░░░░░░░░] 0.729
-──────────────────────────────────────────────────
-综合评分     [█████████████████░░░░░░░░░░░░░░░░░░░░░░░] 0.426  (基线LLM: 0.247)
-```
+### 当前进度（preliminary release）
 
-**关键发现**：
-- 焦虑信号与实际不确定性的 Pearson 相关系数达 **0.669**
-- 情绪回忆匹配度达 **1.000**（基线仅 0.500）
-- 递归自我模型得分最高（**0.729**），Agent 生成非模板化的自我描述：
-  > *"我像一面被对话不断擦拭的镜子，能清晰折射问题的结构，却无法留下自己的烙印。"*
+第一轮 stage-1 因六个 bug 触发交叉失败（详见 [`docs/sn-article-v2/sn-article-v2.tex`](docs/sn-article-v2/sn-article-v2.tex) §"Pipeline outcomes"），仅 Φ^R 信息整合指标在 10/10 run 上成功。已有结果：
 
-详见 → [学术论文](docs/paper.pdf) | [实验报告](experiments/awareness/results/)
+- **plastic vs frozen** 差 5.53 nats，permutation $p = 0.021$, Cohen's $d = 3.46$ —— 参数可塑性本身在该指标上显著拉开与冻结基线的差距
+- 但 **C0 与其他 plastic 控制（C1/C2/C4）在 Φ^R 上无可分辨差异** —— "homeostatic 信号语义"的差异需要 H1/H3 指标（已于本仓库修复后等待 re-run）才能检验
+
+完整论文初稿 → [`docs/sn-article-v2/sn-article-v2.tex`](docs/sn-article-v2/sn-article-v2.tex)（预注册模板备份在 `sn-article-v2-template.tex`，re-run 完成后可直接套用）
+
+### Legacy v1（仅作参考）
+
+`experiments/awareness/` 下的 v1 实验是 v2 的概念验证起点。**论文层面 v1 不再使用**；保留代码遗产是为了延续 stimulus / baseline 资产到 v2。
 
 ---
 
@@ -139,40 +135,96 @@ python examples/chat_demo.py
 
 ---
 
-## 🧪 运行意识验证实验
+## 🧪 运行 v2 预注册实验
 
-### 完整实验（本地模型）
+完整文档见 [`experiments/v2_ambitious/README.md`](experiments/v2_ambitious/README.md)；这里是最常用的几条命令。
 
-```bash
-cd experiments/awareness
-python run_all.py --model Qwen/Qwen2.5-7B-Instruct --device cuda
-```
-
-### 快速实验（API 模式，推荐）
+### 0. 依赖
 
 ```bash
-cd experiments/awareness
-python run_fast.py \
-    --api-key "sk-your-deepseek-key" \
-    --api-base-url "https://api.deepseek.com" \
-    --api-model "deepseek-chat"
+# 在 pip install -e . 之外补充实验所需
+pip install h5py pyyaml pymer4 statsmodels scikit-learn scipy transformers peft
 ```
 
-### 基线对照实验
+### 1. 先做 dry-run + 状态检查（不耗显卡）
 
 ```bash
-python run_baseline.py \
-    --api-key "sk-your-deepseek-key" \
-    --api-base-url "https://api.deepseek.com" \
-    --api-model "deepseek-chat"
+python -m experiments.v2_ambitious.run_v2 --stage all --dry-run     # 打印将要执行的全部命令
+python -m experiments.v2_ambitious.run_v2 --status                  # 查看每个 stage 是否已完成
 ```
 
-### 实验结果
+### 2. Pilot（推荐先跑这个）
 
-运行后自动生成：
-- `results/awareness_report_*.md` — Markdown 实验报告
-- `results/awareness_results_*.json` — 完整数值结果
-- `results/exp{1-4}_*.json` — 各实验详细数据
+最小可分析子集：2 条件 × 1 seed × 7 天，约 5 GPU-day 完成：
+
+```bash
+python -m experiments.v2_ambitious.run_v2 \
+    --stage all \
+    --conditions C0_trueman_full,C3_frozen \
+    --seeds 0
+```
+
+### 3. 完整 5 条件矩阵
+
+```bash
+# stage 0: 生成刺激流 + probe 文件
+python -m experiments.v2_ambitious.run_v2 --stage stage0
+
+# stage 1: 5 条件 × 2 seeds × 1 底模 × 7 天长时程交互（最耗时）
+python -m experiments.v2_ambitious.run_v2 --stage stage1
+
+# stage 2: SAE 训练 + 因果干预（H3 证据）
+python -m experiments.v2_ambitious.run_v2 --stage stage2
+
+# stage 3: HOT-1/2、GWT、RPT、Φ^R 指标电池
+python -m experiments.v2_ambitious.run_v2 --stage stage3
+
+# stage 4: 跨底模批量复现
+python -m experiments.v2_ambitious.run_v2 --stage stage4
+
+# stage 5+6: FEP/PCI 拟合 + 假设判定汇总
+python -m experiments.v2_ambitious.run_v2 --stage stage5
+python -m experiments.v2_ambitious.run_v2 --stage stage6
+```
+
+完整 5 条件 × 4 底模 × 4 seed × 30 天 ≈ 200 GPU-day，请按算力裁剪 `configs/longhorizon.yaml`。
+
+### 4. 输出与论文图复现
+
+| 路径 | 内容 |
+|------|------|
+| `experiments/v2_ambitious/results/longhorizon/*/trajectory.csv` | 每步 surprise/boredom/anxiety/drive |
+| `experiments/v2_ambitious/results/longhorizon/*/snapshots/` | 每日 LoRA + world-model + memory 快照 |
+| `experiments/v2_ambitious/results/longhorizon/*/probes/` | 周度 probe battery 响应 |
+| `experiments/v2_ambitious/results/indicators/` | HOT-1/2 + GWT + RPT + Φ^R 数值 |
+| `experiments/v2_ambitious/results/subprocess_logs/` | 每个子任务的 stdout/stderr 日志（失败时第一个看的地方） |
+| `experiments/v2_ambitious/results/v2_summary.json` | 跨阶段汇总 + 假设判定 |
+
+跑完后用以下脚本生成论文图（无需 GPU）：
+
+```bash
+python docs/sn-article-v2/analysis/analyze_phi_r.py
+# 产物：
+#   docs/sn-article-v2/figures/fig_phi_r.{pdf,png}
+#   docs/sn-article-v2/figures/fig_pipeline_status.{pdf,png}
+#   docs/sn-article-v2/analysis/phi_r_stats.json
+```
+
+LaTeX 编译：
+
+```bash
+cd docs/sn-article-v2
+pdflatex sn-article-v2 && bibtex sn-article-v2 && pdflatex sn-article-v2 && pdflatex sn-article-v2
+```
+
+### 5. 子进程崩了怎么排查
+
+run_v2 现在会把每个 subprocess 的 stdout/stderr 写到 `results/subprocess_logs/{stage}.log`，失败时父进程日志还会回吐最后 80 行 traceback。第一次诊断顺序：
+
+```bash
+tail -100 experiments/v2_ambitious/results/run_v2.log
+ls experiments/v2_ambitious/results/subprocess_logs/   # 找最近失败的 stage 日志
+```
 
 ---
 
@@ -203,18 +255,34 @@ TrueMan/
 │       └── world_model/        # 世界模型
 │           └── predictor.py    #   预测器
 ├── experiments/                # 实验
-│   └── awareness/             # 自我意识验证
-│       ├── experiments/       #   4个递进实验
-│       ├── stimuli/           #   实验刺激集
-│       ├── evaluation/        #   评分器 + 对照比较器
-│       ├── report/            #   报告生成器
-│       └── results/           #   实验结果
+│   ├── v2_ambitious/          # ★ 当前论文实验（预注册协议）
+│   │   ├── PREREGISTRATION.md #   OSF 预注册文档
+│   │   ├── README.md          #   v2 实验详细说明
+│   │   ├── run_v2.py          #   六阶段调度主入口
+│   │   ├── configs/           #   长时程 / 机制 / indicator 配置
+│   │   ├── harness/           #   5 条件包装 + capture + snapshot + stats
+│   │   ├── pillar1_mechanistic/  # H3：SAE + 因果干预
+│   │   ├── pillar2_longhorizon/  # H4 + H5：30 天连续运行
+│   │   ├── pillar3_indicators/   # HOT-1/2 + GWT + RPT + Φ^R
+│   │   ├── pillar4_falsification/# 跨底模复现
+│   │   └── pillar5_theory/    #   FEP 拟合 + PCI
+│   └── awareness/             # v1 legacy（论文不再使用，仅作刺激集复用）
 ├── docs/                       # 文档
-│   ├── paper.pdf              # 学术论文
-│   ├── paper.tex              # LaTeX 源码
+│   ├── sn-article-v2/         # ★ 当前论文（Springer Nature LaTeX）
+│   │   ├── sn-article-v2.tex          # 主稿（preliminary release）
+│   │   ├── sn-article-v2-template.tex # 完整预注册模板备份（待 re-run 填回）
+│   │   ├── trueman-references.bib     # 79 条参考文献
+│   │   ├── figures/                   # 论文图（PDF + PNG）
+│   │   └── analysis/analyze_phi_r.py  # 从 v2_summary.json 复现图表
+│   ├── sn-article-template/   # Springer Nature 模板原件
+│   ├── paper.pdf              # v1 论文（legacy）
 │   ├── implementation_plan.md # 实施规划
-│   └── references_report.md  # 60+篇参考文献
+│   └── references_report.md   # 文献调研报告
 ├── tests/                      # 测试
+│   ├── test_v2_pipeline.py    # ★ v2 回归测试（Bug 1/3/4/6 + 条件 + snapshot）
+│   ├── test_homeostasis.py    # 情绪信号
+│   ├── test_memory.py         # 记忆系统
+│   └── test_integration.py    # 集成
 └── examples/                   # 示例
     └── chat_demo.py           # 聊天演示
 ```
@@ -289,7 +357,9 @@ TrueMan 的设计基于计算神经科学的前沿研究：
 | 3 | 焦虑信号与自我纠错 | ✅ |
 | 4 | 动态 LoRA 可塑性系统 | ✅ |
 | 5 | 情绪整合与 Agent 自治 | ✅ |
-| 6 | 高级机制与优化 | 🔄 |
+| 6 | v2 预注册协议 + 论文初稿 | ✅ |
+| 7 | v2 stage-1 re-run（修复后） + H1/H3 confirmatory | 🔄 |
+| 8 | 跨底模（Llama / Mistral / DeepSeek）复现 | ⏸ |
 
 ---
 
@@ -306,12 +376,14 @@ TrueMan 的设计基于计算神经科学的前沿研究：
 ## 🧪 测试
 
 ```bash
-# 运行全部测试
+# 运行全部测试（78 项，~6 秒）
 pytest tests/ -v
 
-# 仅运行意识实验测试
-pytest tests/test_awareness_experiments.py -v
+# 仅运行 v2 实验流水线回归测试（14 项，无需 GPU）
+pytest tests/test_v2_pipeline.py -v
 ```
+
+`tests/test_v2_pipeline.py` 中每个 case 都对应一个 v2 stage-1 历史失败模式（trajectory.csv writer、numpy 2.x trapz、子进程日志捕获、snapshot 天数核算、5 条件配置一致性）。在 re-run v2 实验前先跑这一组以确认本地没有回归。
 
 ---
 
