@@ -170,7 +170,8 @@ def meta_d_prime(
 
     pts_x = [0.0] + sorted(pts_x) + [1.0]
     pts_y = [0.0] + sorted(pts_y) + [1.0]
-    auc_t2 = float(np.trapz(pts_y, pts_x))
+    _trapz = getattr(np, "trapezoid", None) or np.trapz  # numpy 2.x renames trapz -> trapezoid
+    auc_t2 = float(_trapz(pts_y, pts_x))
 
     # meta-d' 近似：z(AUC_t2 * 2 - 1) 关系
     auc_clipped = max(0.51, min(0.99, auc_t2))

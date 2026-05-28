@@ -144,6 +144,11 @@ class HuggingFaceLLM(LLMBackend):
             temperature=temperature if temperature > 0 else 1.0,
             do_sample=temperature > 0,
             top_p=0.9,
+            # Guard against the long-horizon-LoRA degenerate-output failure mode
+            # we hit in v2: after several days of sleep-replay an anchor prompt
+            # could collapse the language head into repeating the same span.
+            repetition_penalty=1.15,
+            no_repeat_ngram_size=6,
         )
 
         # 只返回新生成的token

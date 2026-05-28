@@ -96,15 +96,45 @@ def _check_environment() -> list[str]:
     return missing
 
 
-def _run(cmd: list[str], dry: bool, label: str) -> int:
+def _slug(label: str) -> str:
+    import re
+    return re.sub(r"[^A-Za-z0-9._-]+", "_", label).strip("_")[:120]
+
+
+def _run(cmd: list[str], dry: bool, label: str, log_dir: Path | None = None) -> int:
     log.info(f"=== {label} ===")
     log.info(" ".join(cmd))
     if dry:
         return 0
+
+    # Per-call log file so subprocess tracebacks survive even though the parent
+    # cannot pipe their stderr live. Tail is also surfaced in run_v2.log on
+    # failure so the next operator can read what went wrong without grepping
+    # the filesystem.
+    log_dir = log_dir or (ROOT / "results" / "subprocess_logs")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / f"{_slug(label)}.log"
+
     try:
-        result = subprocess.run(cmd, capture_output=False, text=True)
+        with open(log_path, "w", encoding="utf-8") as logf:
+            logf.write(f"# CMD: {' '.join(cmd)}\n")
+            logf.write(f"# START: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+            logf.flush()
+            result = subprocess.run(
+                cmd,
+                stdout=logf,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
         if result.returncode != 0:
-            log.error(f"[FAIL] {label} returned {result.returncode}")
+            log.error(f"[FAIL] {label} returned {result.returncode} (full log: {log_path})")
+            # Surface the last ~80 lines of the subprocess log so failures are
+            # diagnosable from run_v2.log alone.
+            try:
+                tail = log_path.read_text(encoding="utf-8", errors="replace").splitlines()[-80:]
+                log.error("---- subprocess tail ----\n" + "\n".join(tail) + "\n---- /tail ----")
+            except Exception as tail_err:
+                log.error(f"(could not read subprocess log tail: {tail_err})")
         else:
             log.info(f"[OK] {label}")
         return result.returncode
