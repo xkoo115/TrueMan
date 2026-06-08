@@ -64,6 +64,15 @@ class HiddenStateCapturer:
         self._h5 = None
         self._current_record: Optional[CaptureRecord] = None
         self._step_counter = 0
+        # Capture exactly ONE hidden state per layer per step -- the perception
+        # encode() forward -- not every token of every generation. Without this
+        # gate the hook fired on all ~1280 forward passes per step (encode +
+        # 3x anxiety samples + the action generation), forcing a GPU->CPU sync
+        # per token (catastrophic slowdown) AND mis-aligning the data: the first
+        # 84 buffered states all came from step 0's generation, not from 84
+        # distinct steps, so they never matched the per-step emotion records.
+        self._armed = False
+        self._captured_this_step: set[int] = set()
 
     # ----- 安装/卸载 hooks -----
     def attach(self, model: torch.nn.Module) -> None:
@@ -101,6 +110,12 @@ class HiddenStateCapturer:
         spec = self.spec
 
         def hook(module, inputs, output):
+            # Only record the first forward of each step (the encode() pass);
+            # ignore every subsequent generation-token forward. This is what
+            # keeps one (state <-> emotion record) pair per step and avoids the
+            # per-token CPU sync that dominated stage-1 runtime.
+            if not self._armed or layer_idx in self._captured_this_step:
+                return
             # output 通常是 tuple，第一个是 hidden_states
             hs = output[0] if isinstance(output, tuple) else output
             if hs.dim() == 3:  # (batch, seq, dim)
@@ -119,6 +134,11 @@ class HiddenStateCapturer:
             elif spec.quantize == "float16":
                 arr = arr.astype(np.float16)
             self._buffer[layer_idx].append(arr)
+            # Disarm once every requested layer has its single state for this
+            # step, so the rest of the step's generation forwards are skipped.
+            self._captured_this_step.add(layer_idx)
+            if len(self._captured_this_step) >= len(self.spec.layers):
+                self._armed = False
 
         return hook
 
@@ -136,9 +156,14 @@ class HiddenStateCapturer:
     def recording(self, step: int, record: CaptureRecord):
         self._current_record = record
         self._current_record.step = step
+        # Arm capture for exactly this step; the hook grabs the first forward
+        # (encode) per layer then disarms itself.
+        self._captured_this_step = set()
+        self._armed = True
         try:
             yield
         finally:
+            self._armed = False
             self._records.append(self._current_record)
             self._step_counter += 1
             if self._step_counter % self.spec.flush_every == 0:

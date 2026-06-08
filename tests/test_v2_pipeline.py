@@ -385,3 +385,51 @@ class TestBug9CausalInterventionShapes:
         out = layer(hs)  # forward triggers the clamp hook; must not crash
         assert out.shape == hs.shape
         inj.detach()
+
+
+# ---------------------------------------------------------------------------
+# Bug 10 -- HiddenStateCapturer fired on every forward pass, i.e. on every
+# generated token (~1280/step), forcing a GPU->CPU sync per token (the stage-1
+# slowdown) and mis-aligning the data: the first N buffered states all came
+# from step 0's generation rather than from N distinct steps. The capturer now
+# records exactly one state per layer per step (the encode() forward).
+# ---------------------------------------------------------------------------
+
+class TestBug10CaptureOncePerStep:
+    def test_one_capture_per_layer_per_step(self):
+        import torch
+        import torch.nn as nn
+        from experiments.v2_ambitious.harness.capture import (
+            HiddenStateCapturer, CaptureSpec, CaptureRecord,
+        )
+
+        class Block(nn.Module):
+            def forward(self, x):
+                return x
+
+        class Model(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.model = nn.Module()
+                self.model.layers = nn.ModuleList([Block() for _ in range(5)])
+
+            def forward(self, x):
+                for layer in self.model.layers:
+                    x = layer(x)
+                return x
+
+        model = Model()
+        spec = CaptureSpec(layers=[1, 3], token_pool="last", quantize="int8",
+                           output_path="_unused.h5", flush_every=10_000)
+        cap = HiddenStateCapturer(spec)
+        cap.attach(model)
+        n_steps, forwards_per_step = 4, 51  # 1 encode + 50 generation tokens
+        for step in range(n_steps):
+            with cap.recording(step, CaptureRecord(condition="C0", base_model="m")):
+                for _ in range(forwards_per_step):
+                    model(torch.randn(1, 7, 8))
+        cap.detach()
+        # Exactly one state per layer per step -- NOT forwards_per_step.
+        assert len(cap._buffer[1]) == n_steps
+        assert len(cap._buffer[3]) == n_steps
+        assert len(cap._records) == n_steps

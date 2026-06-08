@@ -127,17 +127,35 @@ class TrueManAgent:
         # 构建当前prompt
         prompt = self._build_prompt(observation)
 
+        # Per-phase timing, opt-in via TRUEMAN_PROFILE=1, so the stage-1 hot path
+        # can be attributed (encode vs anxiety-sampling vs action vs learning/
+        # sleep) without a profiler. Near-zero cost when disabled.
+        import os
+        _profile = os.environ.get("TRUEMAN_PROFILE") == "1"
+        _t = time.time() if _profile else 0.0
+
+        def _lap(_label: str):
+            nonlocal _t
+            if _profile:
+                now = time.time()
+                print(f"[profile] step {self.total_steps} {_label}: {now - _t:.2f}s",
+                      flush=True)
+                _t = now
+
         # 1. 感知编码
         state_embedding, token_logprobs = self.llm.encode(prompt)
+        _lap("encode")
 
         # 2. 情绪计算
         drive, emotion_state = self.homeostasis.compute_drive(
             token_logprobs, state_embedding, prompt
         )
         self.current_emotion = emotion_state
+        _lap("compute_drive(anxiety)")
 
         # 3. 策略选择 + 4. 行动执行
         action, strategy_name = self.policy.select_action(prompt, emotion_state)
+        _lap("select_action")
 
         # 记录情绪日志
         self.logger.log_emotion(
@@ -170,6 +188,7 @@ class TrueManAgent:
 
         # 6. 学习触发（交互即训练的核心）
         self._trigger_learning(emotion_state, state_embedding, trace)
+        _lap("trigger_learning(sleep)")
 
         self.awake_steps += 1
         self.total_steps += 1

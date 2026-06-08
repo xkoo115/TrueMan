@@ -156,17 +156,22 @@ class HuggingFaceLLM(LLMBackend):
         return self.tokenizer.decode(new_tokens, skip_special_tokens=True)
 
     def generate_with_uncertainty(
-        self, prompt: str, n_samples: int = 3, temperature: float = 1.0
+        self, prompt: str, n_samples: int = 3, temperature: float = 1.0,
+        max_tokens: int = 48,
     ) -> list[str]:
         """带不确定性的多次采样生成。
 
         轻量模式：使用temperature扰动进行多次采样，开销约n_samples倍。
+
+        ``max_tokens`` 默认从 256 降到 48：焦虑信号只看样本间的 n-gram 差异度，
+        48 个 token 已足以衡量分歧，而生成开销是按 token 线性的——这是 stage-1
+        每步最大的可省成本之一（256→48 ≈ 5× 提速这一段）。
         """
         results = []
         for i in range(n_samples):
             # 每次使用略微不同的temperature增加多样性
             temp = temperature * (1.0 + 0.1 * i) if i > 0 else temperature
-            result = self.generate(prompt, max_tokens=256, temperature=temp)
+            result = self.generate(prompt, max_tokens=max_tokens, temperature=temp)
             results.append(result)
         return results
 
