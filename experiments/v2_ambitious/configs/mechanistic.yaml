@@ -22,7 +22,7 @@ probe_features:
 
 causal_intervention:
   layer: 16
-  modes: [clamp, inject, off]   # off = 阴性对照
+  modes: ["clamp", "inject", "off"]   # off = 阴性对照（必须加引号：YAML 1.1 会把裸 off 解析成布尔 False）
   scalars: [1.0, 2.0]           # pilot：去掉 0.5（边缘效应弱）；保留主对比
   probe_set: experiments/v2_ambitious/data/probes/metacog_full.jsonl
   output_dir: experiments/v2_ambitious/results/mechanistic/intervention/

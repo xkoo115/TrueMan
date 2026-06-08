@@ -43,6 +43,13 @@ class FeatureInjector:
 
     def __init__(self, directions: list[list[float]], mode: str, scalar: float = 1.0):
         self.directions = torch.tensor(directions, dtype=torch.float32)  # (k, hidden_dim)
+        if self.directions.ndim == 1:
+            # Defensive: an empty or single flat direction would otherwise make
+            # ``D.T @ D`` collapse to a 0-D scalar and crash ``hs @ P`` with the
+            # opaque "both arguments to matmul need to be at least 1D, but they
+            # are 3D and 0D". main() already guards the empty case; this keeps a
+            # lone direction well-shaped as (1, hidden_dim).
+            self.directions = self.directions.reshape(1, -1)
         self.mode = mode
         self.scalar = scalar
         self._hook = None
@@ -136,6 +143,23 @@ def main():
     with open(args.features, "r", encoding="utf-8") as f:
         feat_data = json.load(f)
     directions = [feat["decoder_direction"] for feat in feat_data["top_features"]]
+
+    # Fail soft, not cryptic: if probe_features selected zero features there is
+    # nothing to clamp/inject. Crashing here (the old behaviour) aborts the whole
+    # multi-hour stage; instead we record an explicit no_features result and exit
+    # 0 so the orchestrator can finish the remaining conditions.
+    if len(directions) == 0:
+        print(f"[Causal] WARNING: '{args.features}' contains 0 top_features; "
+              f"cannot run mode={args.mode}. Writing no_features result and skipping.",
+              flush=True)
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        with open(args.output, "w", encoding="utf-8") as f:
+            json.dump({
+                "condition": args.condition, "mode": args.mode, "scalar": args.scalar,
+                "layer": args.layer, "n_features": 0, "status": "no_features",
+                "results": [],
+            }, f, ensure_ascii=False, indent=2)
+        return
 
     if args.mode != "off":
         injector = FeatureInjector(directions, mode=args.mode, scalar=args.scalar)

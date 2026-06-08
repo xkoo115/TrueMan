@@ -325,3 +325,63 @@ class TestSnapshotHelpers:
         assert out["frobenius"] == 0.0
         assert out["n_experts_a"] == 0
         assert out["n_experts_b"] == 0
+
+
+# ---------------------------------------------------------------------------
+# Bug 7 -- YAML 1.1 parses bare ``off`` as boolean False, so the stage-2
+# ``modes: [clamp, inject, off]`` config smuggled a bool into the command list
+# and crashed ``" ".join(cmd)``. _run() now stringifies every token.
+# ---------------------------------------------------------------------------
+
+class TestBug7RunStringifiesTokens:
+    def test_run_tolerates_bool_token(self, tmp_path: Path):
+        from experiments.v2_ambitious import run_v2
+        # ``False`` mimics YAML-coerced ``off``. Before the fix this raised
+        # TypeError in " ".join(cmd) *before* the dry-run short-circuit.
+        rc = run_v2._run(
+            ["python", "--mode", False, "--scalar", 1.0],
+            dry=True, label="bug7-bool-token", log_dir=tmp_path / "logs",
+        )
+        assert rc == 0
+
+
+# ---------------------------------------------------------------------------
+# Bug 8 -- probe_features feature selection. The old Bonferroni-over-dict_size
+# rule selected zero features at pilot N; BH-FDR + a top-k fallback now keep
+# the feature set non-empty so the downstream battery can run.
+# ---------------------------------------------------------------------------
+
+class TestBug8FeatureSelection:
+    def test_bh_fdr_basic_and_empty(self):
+        from experiments.v2_ambitious.pillar1_mechanistic.probe_features import (
+            bh_fdr_significant,
+        )
+        p = np.array([1e-9, 1e-3, 0.02, 0.3, 0.9])
+        mask = bh_fdr_significant(p, 0.05)
+        # The three small p-values clear BH at q=0.05; the two large ones do not.
+        assert mask.tolist() == [True, True, True, False, False]
+        # Degenerate input must not raise.
+        assert bh_fdr_significant(np.array([]), 0.05).shape == (0,)
+        assert bh_fdr_significant(np.array([0.99, 0.95]), 0.05).tolist() == [False, False]
+
+
+# ---------------------------------------------------------------------------
+# Bug 9 -- causal_intervention crashed with "both arguments to matmul need to
+# be at least 1D, but they are 3D and 0D" when directions collapsed to <2D.
+# A single direction must stay (1, hidden) so ``hs @ (D.T @ D)`` stays valid.
+# ---------------------------------------------------------------------------
+
+class TestBug9CausalInterventionShapes:
+    def test_single_direction_hook_runs_on_3d(self):
+        import torch
+        from experiments.v2_ambitious.pillar1_mechanistic.causal_intervention import (
+            FeatureInjector,
+        )
+        inj = FeatureInjector([[1.0, 0.0, 0.0]], mode="clamp")
+        assert inj.directions.ndim == 2  # not collapsed to 1D -> P stays 2D
+        layer = torch.nn.Linear(3, 3, bias=False)
+        inj.attach(layer)
+        hs = torch.randn(2, 4, 3)  # (batch, seq, hidden) residual stream
+        out = layer(hs)  # forward triggers the clamp hook; must not crash
+        assert out.shape == hs.shape
+        inj.detach()

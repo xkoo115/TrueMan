@@ -102,6 +102,13 @@ def _slug(label: str) -> str:
 
 
 def _run(cmd: list[str], dry: bool, label: str, log_dir: Path | None = None) -> int:
+    # Coerce every token to str up front. YAML 1.1 parses bare ``off`` as the
+    # boolean ``False`` (and ``on``/``yes``/``no`` likewise), so a config like
+    # ``modes: [clamp, inject, off]`` would otherwise smuggle a ``bool`` into the
+    # command list and crash ``" ".join(cmd)`` / ``subprocess`` with a cryptic
+    # "expected str instance, bool found". Stringifying here is harmless for
+    # genuine strings and bulletproofs the whole stage runner.
+    cmd = [str(c) for c in cmd]
     log.info(f"=== {label} ===")
     log.info(" ".join(cmd))
     if dry:
