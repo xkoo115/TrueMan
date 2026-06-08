@@ -35,7 +35,7 @@ class ExplorationPolicy:
         """执行探索策略。"""
         exploration_prompt = self.EXPLORATION_PROMPT.format(boredom=emotions.boredom)
         full_prompt = prompt + "\n\n" + exploration_prompt
-        return self.llm.generate(full_prompt, max_tokens=256, temperature=1.2)
+        return self.llm.generate(full_prompt, max_tokens=128, temperature=1.2)
 
 
 class InvestigatePolicy:
@@ -61,7 +61,7 @@ class InvestigatePolicy:
         """执行深究策略。"""
         investigate_prompt = self.INVESTIGATE_PROMPT.format(surprise=emotions.surprise)
         full_prompt = prompt + "\n\n" + investigate_prompt
-        return self.llm.generate(full_prompt, max_tokens=256, temperature=0.7)
+        return self.llm.generate(full_prompt, max_tokens=128, temperature=0.7)
 
 
 class CuriosityPolicy:

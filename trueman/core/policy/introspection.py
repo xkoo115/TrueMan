@@ -57,4 +57,6 @@ class IntrospectionPolicy:
             anxiety=emotions.anxiety,
         )
         full_prompt = prompt + "\n\n" + introspection_prompt
-        return self.llm.generate(full_prompt, max_tokens=256, temperature=0.5)
+        # 256->128: anxiety 长期 >0.8，introspection 几乎每步触发，是 select_action
+        # 的主要开销；自定义 prompt 不出 EOS 会顶满，128 token 已足够。
+        return self.llm.generate(full_prompt, max_tokens=128, temperature=0.5)
