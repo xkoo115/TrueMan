@@ -169,6 +169,34 @@ class AnxietySignal:
         self.n_samples = config.n_samples
         self.lightweight = config.lightweight
         self.temperature_scale = config.temperature_scale
+        # 运行统计归一化（同 SurpriseSignal）：把原始分歧度转成相对信号，恢复方差。
+        self.decay = getattr(config, "decay", 0.9)
+        self.threshold = getattr(config, "threshold", 0.0)
+        self.running_mean = 0.0
+        self.running_var = 1.0
+        self._initialized = False
+
+    def _normalize(self, raw: float) -> torch.Tensor:
+        """把原始分歧度经 EMA 归一化 + sigmoid 映射到 [0,1]。
+
+        没有这一步时，``1 - 文本相似度`` 在高温采样下恒接近 1（焊死），焦虑信号
+        既无法驱动行为也无法被相关分析检出。归一化后，焦虑反映的是"相对最近基线
+        的分歧变化"，自然在 0.5 上下波动、恢复动态范围。首次调用返回中性 0.5。
+        """
+        if not self._initialized:
+            self.running_mean = raw
+            self.running_var = 1.0
+            self._initialized = True
+            return torch.tensor(0.5)
+        std = math.sqrt(self.running_var + 1e-8)
+        normalized = (raw - self.running_mean) / std
+        out = torch.sigmoid(torch.tensor(normalized - self.threshold))
+        # 更新运行统计量（EMA）
+        delta = raw - self.running_mean
+        self.running_mean += (1 - self.decay) * delta
+        self.running_var = self.decay * self.running_var + (1 - self.decay) * delta * (raw - self.running_mean)
+        self.running_var = max(self.running_var, 1e-8)
+        return out
 
     def compute_from_predictions(self, predictions: list[torch.Tensor]) -> torch.Tensor:
         """从多次预测的概率分布计算焦虑信号。
@@ -192,7 +220,7 @@ class AnxietySignal:
 
         anxiety = (disagreement + entropy + variance) / 3.0
         anxiety_val = anxiety if isinstance(anxiety, float) else anxiety.item()
-        return torch.tensor(max(0.0, min(1.0, anxiety_val)))
+        return self._normalize(anxiety_val)
 
     def compute_from_texts(self, texts: list[str]) -> torch.Tensor:
         """从多次采样的文本计算焦虑信号（基于文本差异度）。
@@ -210,8 +238,8 @@ class AnxietySignal:
                 similarities.append(sim)
 
         avg_similarity = sum(similarities) / len(similarities) if similarities else 1.0
-        anxiety = 1.0 - avg_similarity  # 相似度低 → 焦虑高
-        return torch.tensor(max(0.0, min(1.0, anxiety)))
+        raw = 1.0 - avg_similarity  # 相似度低 → 原始分歧度高
+        return self._normalize(raw)  # EMA 归一化恢复方差
 
     @staticmethod
     def _top_k_truncate(probs: torch.Tensor, k: int) -> torch.Tensor:

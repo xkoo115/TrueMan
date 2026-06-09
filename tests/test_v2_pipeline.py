@@ -433,3 +433,65 @@ class TestBug10CaptureOncePerStep:
         assert len(cap._buffer[1]) == n_steps
         assert len(cap._buffer[3]) == n_steps
         assert len(cap._records) == n_steps
+
+
+# ---------------------------------------------------------------------------
+# Bug 11 -- the anxiety signal was 1 - text_similarity, which under temperature
+# sampling pins near ~0.9 every step (no variance). With zero dynamic range it
+# can neither drive behaviour nor be recovered by feature correlation. It now
+# runs the same EMA normalization as SurpriseSignal, restoring spread.
+# ---------------------------------------------------------------------------
+
+class TestBug11AnxietyHasVariance:
+    def test_anxiety_not_pinned(self):
+        from trueman.core.config import AnxietyConfig
+        from trueman.core.homeostasis.signals import AnxietySignal
+        sig = AnxietySignal(AnxietyConfig())
+        cases = [
+            ["the cat sat on the mat", "the cat sat on the mat"],   # identical
+            ["hello world foo bar", "completely different zzz qqq"],  # divergent
+            ["apple apple apple", "apple apple banana"],            # mild
+            ["x y z", "a b c"],                                     # divergent
+            ["same same same", "same same same"],                  # identical
+        ]
+        out = [sig.compute_from_texts(t).item() for t in cases]
+        assert out[0] == 0.5  # warmup returns neutral
+        assert all(0.0 <= v <= 1.0 for v in out)
+        # The whole point: a real spread, not all pinned at the ceiling.
+        assert max(out) - min(out) > 0.1
+
+
+# ---------------------------------------------------------------------------
+# Bug 12 -- trained LoRA experts were silently discarded: the trainer wrapped
+# the model into a PeftModel (trainer._peft_model) but the hot-loader still held
+# the raw model, so isinstance(model, PeftModel) was False and every load failed
+# (NOT_PEFT_MODEL -> expert_id=None), wasting the whole sleep-consolidation pass.
+# add_expert now repoints the hot-loader at the trainer's PeftModel.
+# ---------------------------------------------------------------------------
+
+class TestBug12ExpertAttaches:
+    def test_add_expert_repoints_hotloader_to_peftmodel(self, tmp_path: Path, monkeypatch):
+        from unittest.mock import MagicMock
+        monkeypatch.chdir(tmp_path)  # keep adapters/ dirs inside tmp
+        from trueman.core.config import LoRAConfig
+        from trueman.core.plasticity.lora_pool import DynamicLoRAPool
+
+        pool = DynamicLoRAPool(model=object(), llm=MagicMock(),
+                               config=LoRAConfig(), hidden_size=8)
+
+        sentinel_peft = object()  # stands in for the wrapped PeftModel
+        pool.trainer = MagicMock()
+        pool.trainer.train.return_value = str(tmp_path / "adapters" / "expert_0")
+        pool.trainer._peft_model = sentinel_peft
+
+        seen = {}
+        pool.hot_loader = MagicMock()
+        def fake_load(name, path):
+            seen["model_at_load"] = pool.hot_loader.model
+            return True
+        pool.hot_loader.load.side_effect = fake_load
+
+        eid = pool.add_expert([MagicMock()])
+        assert eid == 0                                  # expert registered, not None
+        assert pool.hot_loader.model is sentinel_peft    # repointed before load
+        assert seen["model_at_load"] is sentinel_peft    # load saw the PeftModel

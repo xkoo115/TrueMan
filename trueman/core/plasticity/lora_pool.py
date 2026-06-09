@@ -98,6 +98,15 @@ class DynamicLoRAPool:
         if adapter_path is None:
             return None
 
+        # 关键修复：trainer 在首次 train() 时通过 get_peft_model 把 base model 包成了
+        # PeftModel（存在 trainer._peft_model），但 hot_loader 仍持有未包装的 raw model，
+        # 导致 isinstance(model, PeftModel) 为 False → load 永远失败（NOT_PEFT_MODEL）→
+        # 每个训练好的专家被静默丢弃、expert_id=None，~97s 的睡眠训练全部白费。
+        # 让 hot_loader 操作同一个 PeftModel 包装器，专家才能真正挂载。
+        if getattr(self.trainer, "_peft_model", None) is not None:
+            self.hot_loader.model = self.trainer._peft_model
+            self.model = self.trainer._peft_model
+
         # 加载到模型
         adapter_name = f"expert_{expert_id}"
         if not self.hot_loader.load(adapter_name, adapter_path):

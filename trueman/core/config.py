@@ -48,6 +48,11 @@ class AnxietyConfig:
     n_samples: int = 3
     lightweight: bool = True
     temperature_scale: float = 1.5
+    # 焦虑也走运行统计归一化（同 SurpriseSignal），把"绝对分歧度"变成"相对分歧度"。
+    # 否则 1-文本相似度 在高温采样下恒接近 1，信号焊死、无方差，既无法驱动行为也
+    # 无法被 SAE 特征相关分析检出。decay 是 EMA 衰减系数；threshold 调灵敏度。
+    decay: float = 0.9
+    threshold: float = 0.0
 
 
 @dataclass
