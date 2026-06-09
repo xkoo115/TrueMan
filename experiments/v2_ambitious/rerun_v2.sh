@@ -36,6 +36,14 @@ rm -f  experiments/v2_ambitious/results/fep_*.json
 rm -f  experiments/v2_ambitious/results/v2_summary.json
 # Old stream is shorter than the new 336-step config -> force a rebuild.
 rm -f  experiments/v2_ambitious/data/stimulus_stream.jsonl
+# Old LoRA experts were trained under the broken (non-attaching) path -> clear
+# so plasticity starts from a clean pool.
+rm -rf adapters
+# Stale run_v2.log accumulates across runs (append mode); archive it so the new
+# run is easy to read from the top.
+[ -f experiments/v2_ambitious/results/run_v2.log ] && \
+  mv experiments/v2_ambitious/results/run_v2.log \
+     "experiments/v2_ambitious/results/run_v2.log.$(date +%Y%m%d_%H%M%S).bak"
 
 echo "[rerun] launching full pipeline: stage0..stage6, --force, seeds 0,1"
 "$PY" -m experiments.v2_ambitious.run_v2 --stage all --force --seeds 0,1
