@@ -72,7 +72,11 @@ class AgentConfig:
     base_model_name: str = "Qwen/Qwen2.5-7B-Instruct"
     device: str = "cuda"
     memory_size: int = 10000
-    awake_threshold: int = 1000
+    # 1000→30：sleep 整合（= 训练 LoRA 专家 = 参数可塑性）按"清醒步数 >= awake_threshold
+    # 或 anxiety > emergency"触发。原来 1000 在百步级 pilot run 里永不命中，而 anxiety
+    # 归一化后也很少 >0.9 → 可塑性根本不会跑。降到 30 让 sleep 每约 30 步触发一次，C0
+    # 才真正"可塑"。每次 consolidate 只需内存里有 ≥10 条轨迹即可训练。
+    awake_threshold: int = 30
     max_inference_time: float = 30.0  # 秒
 
     # 量化加载

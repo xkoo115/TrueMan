@@ -7,10 +7,14 @@ captures_source: experiments/v2_ambitious/results/longhorizon/C0_trueman_full_se
 
 sae:
   layer: 16             # Qwen2.5-7B 共 28 层；中层 16 适合 monosemantic features
-  dict_size: 8192       # pilot：原 16384 减半，降显存 + 训练时间
-  top_k: 32             # pilot：原 64 减半
-  epochs: 3             # pilot：原 5 → 3
-  batch_size: 2048      # pilot：原 4096 减半（适配 32GB VRAM）
+  # 捕获修复后每步只存 1 条 hidden state，14d×24h ≈ 336 样本/run。8192 维字典在
+  # 几百样本上完全欠定（且 batch=2048>N 时每 epoch 只有 1 个 batch=3 步梯度）。
+  # 缩到 512 维 + batch 64 + 20 epoch，让 SAE 真正做 ~100 步梯度。
+  # 注意：这仍是 pilot 规模；论文级需 token_pool="all" 或 ≥5e6 激活，那是另一项改造。
+  dict_size: 512
+  top_k: 16
+  epochs: 20
+  batch_size: 64
   lr: 3.0e-4
   output: experiments/v2_ambitious/results/mechanistic/sae_layer16.pt
 

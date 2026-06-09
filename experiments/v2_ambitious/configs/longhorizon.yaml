@@ -8,8 +8,8 @@
 experiment_name: pillar2_longhorizon
 
 stream:
-  days: 7                 # pilot：7 天（原 30 天）
-  hours_per_day: 12       # pilot：12 步/天（原 24）
+  days: 14                # 提速后扩到 14 天（每步 ~17s，单 run ~95min）
+  hours_per_day: 24       # 24 步/天 → 336 步/run，给 SAE/相关分析更多样本
   seed: 42
   output: experiments/v2_ambitious/data/stimulus_stream.jsonl
 
