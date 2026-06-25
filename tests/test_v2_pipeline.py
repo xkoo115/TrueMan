@@ -328,6 +328,123 @@ class TestSnapshotHelpers:
 
 
 # ---------------------------------------------------------------------------
+# Bug 9 -- snapshot serialized ``ExpertMetadata.state_dict()``, which does not
+# exist. day0 (0 experts) wrote an empty ``{}``; every later day raised
+# AttributeError, got swallowed by run.py's try/except, and left an empty
+# snapshot dir. The whole longitudinal signal (Pillar 2/3/5) collapsed because
+# experts were never persisted. take_snapshot now reads the real adapter
+# weights off ``adapter_path`` and round-trips a non-empty payload.
+# ---------------------------------------------------------------------------
+
+class TestBug9SnapshotPersistsExperts:
+    """Reproduces the data-killing snapshot bug with no LLM/CUDA: a fake pool
+    whose experts point at real on-disk PEFT adapter dirs."""
+
+    def _make_adapter_dir(self, root: Path, eid: int, scale: float) -> str:
+        import torch
+        from safetensors.torch import save_file
+        d = root / f"expert_{eid}"
+        d.mkdir(parents=True)
+        json.dump(
+            {"peft_type": "LORA", "r": 8, "lora_alpha": 16,
+             "target_modules": ["q_proj"], "base_model_name_or_path": "x"},
+            (d / "adapter_config.json").open("w"),
+        )
+        torch.manual_seed(eid)
+        save_file(
+            {"base_model.model.layers.0.q_proj.lora_A.weight": torch.randn(8, 16) * scale,
+             "base_model.model.layers.0.q_proj.lora_B.weight": torch.randn(16, 8) * scale},
+            str(d / "adapter_model.safetensors"),
+        )
+        return str(d)
+
+    class _ExpertMeta:
+        def __init__(self, adapter_path: str, rank: int = 8, domain_tag: str = ""):
+            self.adapter_path = adapter_path
+            self.rank = rank
+            self.domain_tag = domain_tag
+
+    class _Pool:
+        def __init__(self, experts):
+            self.experts = experts
+
+    class _WorldModel:
+        def state_dict(self):
+            return {"w": __import__("torch").zeros(2)}
+
+    class _Mem:
+        traces: list = []
+
+    class _Agent:
+        def __init__(self, pool):
+            self.lora_pool = pool
+            self.world_model = TestBug9SnapshotPersistsExperts._WorldModel()
+            self.episodic_memory = TestBug9SnapshotPersistsExperts._Mem()
+
+    def _agent_with_experts(self, adapter_root: Path, scale: float):
+        e0 = self._make_adapter_dir(adapter_root, 0, scale)
+        e1 = self._make_adapter_dir(adapter_root, 1, scale)
+        pool = self._Pool({0: self._ExpertMeta(e0), 1: self._ExpertMeta(e1)})
+        return self._Agent(pool)
+
+    def test_snapshot_persists_nonempty_experts(self, tmp_path: Path):
+        import torch
+        from experiments.v2_ambitious.harness.snapshots import (
+            take_snapshot, SnapshotMeta,
+        )
+        agent = self._agent_with_experts(tmp_path / "adapters", scale=1.0)
+        out = take_snapshot(
+            agent, str(tmp_path / "snaps"),
+            SnapshotMeta(day=5, condition="C0", base_model="m", seed=0,
+                         cumulative_steps=10, cumulative_lora_experts=2,
+                         cumulative_sleep_count=1, timestamp="t"),
+        )
+        saved = torch.load(out / "lora_experts.pt", map_location="cpu")
+        assert set(saved.keys()) == {0, 1}, "experts must be persisted, not {}"
+        assert all(len(sd) == 2 for sd in saved.values())
+        assert (out / "lora_experts_meta.json").exists()
+
+    def test_snapshot_raises_when_experts_unserializable(self, tmp_path: Path):
+        # Pool claims an expert but its adapter dir is gone -> must not silently
+        # write an empty snapshot.
+        from experiments.v2_ambitious.harness.snapshots import (
+            take_snapshot, SnapshotMeta,
+        )
+        pool = self._Pool({0: self._ExpertMeta(str(tmp_path / "does_not_exist"))})
+        agent = self._Agent(pool)
+        with pytest.raises(RuntimeError):
+            take_snapshot(
+                agent, str(tmp_path / "snaps"),
+                SnapshotMeta(day=1, condition="C0", base_model="m", seed=0,
+                             cumulative_steps=1, cumulative_lora_experts=1,
+                             cumulative_sleep_count=0, timestamp="t"),
+            )
+
+    def test_divergence_nonzero_across_days(self, tmp_path: Path):
+        from experiments.v2_ambitious.harness.snapshots import (
+            take_snapshot, SnapshotMeta, parameter_divergence,
+        )
+        a = take_snapshot(
+            self._agent_with_experts(tmp_path / "ad_a", scale=1.0),
+            str(tmp_path / "snaps"),
+            SnapshotMeta(day=0, condition="C0", base_model="m", seed=0,
+                         cumulative_steps=1, cumulative_lora_experts=2,
+                         cumulative_sleep_count=0, timestamp="t"),
+        )
+        b = take_snapshot(
+            self._agent_with_experts(tmp_path / "ad_b", scale=3.0),
+            str(tmp_path / "snaps"),
+            SnapshotMeta(day=7, condition="C0", base_model="m", seed=0,
+                         cumulative_steps=2, cumulative_lora_experts=2,
+                         cumulative_sleep_count=1, timestamp="t"),
+        )
+        out = parameter_divergence(str(a), str(b))
+        assert out["n_experts_a"] == 2 and out["n_experts_b"] == 2
+        assert out["common_experts"] == 2
+        assert out["frobenius"] > 0.0, "divergence must be measurable, not 0"
+
+
+# ---------------------------------------------------------------------------
 # Bug 7 -- YAML 1.1 parses bare ``off`` as boolean False, so the stage-2
 # ``modes: [clamp, inject, off]`` config smuggled a bool into the command list
 # and crashed ``" ".join(cmd)``. _run() now stringifies every token.

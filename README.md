@@ -71,10 +71,6 @@
 
 完整论文初稿 → [`docs/sn-article-v2/sn-article-v2.tex`](docs/sn-article-v2/sn-article-v2.tex)（预注册模板备份在 `sn-article-v2-template.tex`，re-run 完成后可直接套用）
 
-### Legacy v1（仅作参考）
-
-`experiments/awareness/` 下的 v1 实验是 v2 的概念验证起点。**论文层面 v1 不再使用**；保留代码遗产是为了延续 stimulus / baseline 资产到 v2。
-
 ---
 
 ## 🚀 快速开始
@@ -152,6 +148,15 @@ pip install h5py pyyaml pymer4 statsmodels scikit-learn scipy transformers peft
 python -m experiments.v2_ambitious.run_v2 --stage all --dry-run     # 打印将要执行的全部命令
 python -m experiments.v2_ambitious.run_v2 --status                  # 查看每个 stage 是否已完成
 ```
+
+> **一键干净复现（推荐）**：拉取最新修复后，直接跑
+> [`experiments/v2_ambitious/rerun_v2.sh`](experiments/v2_ambitious/rerun_v2.sh)。
+> 它会清掉旧的派生结果与失效的 LoRA 专家、重建刺激流，然后 `--force` 跑完
+> stage0→6（seeds 0,1）。长任务（约 16–20h），建议 `nohup ... &` 后台运行。
+> ```bash
+> nohup bash experiments/v2_ambitious/rerun_v2.sh > rerun.out 2>&1 &
+> tail -f experiments/v2_ambitious/results/run_v2.log
+> ```
 
 ### 2. Pilot（推荐先跑这个）
 
@@ -265,8 +270,8 @@ TrueMan/
 │   │   ├── pillar2_longhorizon/  # H4 + H5：30 天连续运行
 │   │   ├── pillar3_indicators/   # HOT-1/2 + GWT + RPT + Φ^R
 │   │   ├── pillar4_falsification/# 跨底模复现
-│   │   └── pillar5_theory/    #   FEP 拟合 + PCI
-│   └── awareness/             # v1 legacy（论文不再使用，仅作刺激集复用）
+│   │   ├── pillar5_theory/    #   FEP 拟合 + PCI
+│   │   └── rerun_v2.sh        #   一键全流程干净复现（stage0→6）
 ├── docs/                       # 文档
 │   ├── sn-article-v2/         # ★ 当前论文（Springer Nature LaTeX）
 │   │   ├── sn-article-v2.tex          # 主稿（preliminary release）
@@ -275,7 +280,6 @@ TrueMan/
 │   │   ├── figures/                   # 论文图（PDF + PNG）
 │   │   └── analysis/analyze_phi_r.py  # 从 v2_summary.json 复现图表
 │   ├── sn-article-template/   # Springer Nature 模板原件
-│   ├── paper.pdf              # v1 论文（legacy）
 │   ├── implementation_plan.md # 实施规划
 │   └── references_report.md   # 文献调研报告
 ├── tests/                      # 测试

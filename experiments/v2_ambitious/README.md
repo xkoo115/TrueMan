@@ -1,8 +1,8 @@
 # TrueMan v2 — 雄心路径实验框架
 
-这是 v2 重设计的实验框架。**v1 (`experiments/awareness/`) 不再用于
-论文证据**，仅作为代码遗产保留。v2 严格遵循 `PREREGISTRATION.md` 中
-登记的 5 项假设 (H1–H5)。
+这是论文使用的实验框架（v1 已从仓库移除）。v2 严格遵循
+`PREREGISTRATION.md` 中登记的 5 项假设 (H1–H5)，自包含、不依赖任何
+旧实验资产。
 
 ---
 
@@ -128,20 +128,7 @@ causal   battery    PCI
 
 ---
 
-## 六、与 v1 的关系
-
-`experiments/awareness/` 中的 v1 实验保留作为代码遗产。它给 v2
-提供了：
-
-- `stimuli/` 中的刺激集（v2 会扩充并复用）
-- 部分 baseline 实现（Tier0–Tier3）
-
-**论文层面**：v1 数据不应再进入 sn-article-v2.tex。v2 推翻 v1 在
-"自我意识"措辞和评分公式上的所有 claim。
-
----
-
-## 七、参考资料
+## 六、参考资料
 
 - Butlin et al. 2023 (arXiv:2308.08708) — 14 consciousness indicators
 - Maniscalco & Lau 2012 — meta-d' / d'

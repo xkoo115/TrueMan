@@ -1,11 +1,30 @@
 """每日参数 + 状态快照工具。
 
 用于支柱 2 (长时程) 的核心度量：参数轨迹散度、行为表型漂移。
+
+Bug 9 (致命): 旧版 ``take_snapshot`` 把 LoRA 专家序列化为
+``{eid: e.state_dict()}``, 但 ``DynamicLoRAPool.experts`` 的 value 是
+``ExpertMetadata`` (一个纯元数据 dataclass), 根本没有 ``.state_dict()``。
+后果:
+  - day0 (尚无专家) → 字典推导式得到 ``{}``, 侥幸写出一个空文件;
+  - 一旦睡眠整合产出第一个专家, 推导式抛 ``AttributeError`` → 被 run.py 的
+    try/except 吞掉 → 当天快照目录只剩一个空文件夹;
+  - 于是 Pillar 2 轨迹散度恒为 0、Pillar 5 FEP 无数据、Pillar 3 指标电池
+    因 ``lora_experts_unavailable`` 静默回退到裸 base 模型, 五个条件塌缩成同一个
+    模型, 所有假设 NOT CONFIRMED。
+
+真实的 LoRA 权重保存在磁盘上 ``ExpertMetadata.adapter_path`` 指向的 PEFT
+适配器目录里。本模块现在从那里读回权重 (``peft.utils.load_peft_weights``),
+序列化为 ``{eid: state_dict}`` (与下游 ``parameter_divergence`` 期望的格式一致),
+并把可重建专家所需的元数据 (adapter_path / rank / domain_tag / adapter_config)
+写到同目录的 ``lora_experts_meta.json`` 旁车文件。
 """
 
 from __future__ import annotations
 
 import json
+import shutil
+import tempfile
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
@@ -24,25 +43,100 @@ class SnapshotMeta:
     timestamp: str
 
 
+def _load_expert_weights(adapter_path: str | Path) -> dict[str, torch.Tensor] | None:
+    """Read a single PEFT adapter's tensors back off disk.
+
+    Returns ``None`` (rather than raising) if the directory is missing or holds
+    no readable weights, so one corrupt expert never aborts a whole snapshot.
+    """
+    p = Path(adapter_path)
+    if not p.exists():
+        return None
+    try:
+        from peft.utils import load_peft_weights
+        weights = load_peft_weights(str(p))
+        return weights or None
+    except Exception:
+        # Fallback: raw file load, in case the peft helper rejects the dir.
+        for fname in ("adapter_model.safetensors", "adapter_model.bin"):
+            fp = p / fname
+            if not fp.exists():
+                continue
+            try:
+                if fname.endswith(".safetensors"):
+                    from safetensors.torch import load_file
+                    return load_file(str(fp)) or None
+                return torch.load(str(fp), map_location="cpu") or None
+            except Exception:
+                continue
+        return None
+
+
+def _serialize_experts(pool) -> tuple[dict[int, dict], dict[str, dict]]:
+    """Pull every expert's weights + metadata out of a live LoRA pool.
+
+    Returns ``(weights_by_eid, meta_by_eid)``.  ``weights_by_eid`` maps
+    ``expert_id -> state_dict`` (the format ``parameter_divergence`` consumes);
+    ``meta_by_eid`` is a JSON-serialisable sidecar keyed by ``str(expert_id)``.
+    """
+    weights: dict[int, dict] = {}
+    meta: dict[str, dict] = {}
+    experts = getattr(pool, "experts", None) or {}
+    for eid, md in experts.items():
+        adapter_path = getattr(md, "adapter_path", None)
+        sd = _load_expert_weights(adapter_path) if adapter_path else None
+        if sd is None:
+            continue
+        weights[int(eid)] = sd
+        cfg = None
+        if adapter_path:
+            cfg_path = Path(adapter_path) / "adapter_config.json"
+            if cfg_path.exists():
+                try:
+                    cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+                except Exception:
+                    cfg = None
+        meta[str(int(eid))] = {
+            "adapter_path": str(adapter_path) if adapter_path else None,
+            "rank": getattr(md, "rank", None),
+            "domain_tag": getattr(md, "domain_tag", ""),
+            "adapter_config": cfg,
+        }
+    return weights, meta
+
+
 def take_snapshot(agent, output_dir: str, meta: SnapshotMeta) -> Path:
     """保存 agent 的：
-    - LoRA 权重（如有）
+    - LoRA 专家权重（从各专家的 adapter_path 读回真实张量）
     - 世界模型权重
-    - episodic memory dump
-    - 元信息
+    - episodic memory dump（仅元数据）
+    - 快照元信息
 
     Returns:
         快照目录路径
+
+    Raises:
+        RuntimeError: 当 pool 报告有专家、但没有任何一个能被序列化时
+        （磁盘 adapter 丢失/损坏）。宁可大声失败, 也不要再重蹈 Bug 9
+        “看似完成、实则全是空” 的覆辙。
     """
     out = Path(output_dir) / f"day{meta.day:03d}_{meta.condition}_seed{meta.seed}"
     out.mkdir(parents=True, exist_ok=True)
 
-    # LoRA 权重
-    if agent.lora_pool is not None:
-        torch.save(
-            {eid: e.state_dict() for eid, e in agent.lora_pool.experts.items()},
-            out / "lora_experts.pt",
-        )
+    # ----- LoRA 专家 -----
+    pool = getattr(agent, "lora_pool", None)
+    n_reported = len(getattr(pool, "experts", {}) or {}) if pool is not None else 0
+    if pool is not None:
+        weights, expert_meta = _serialize_experts(pool)
+        torch.save(weights, out / "lora_experts.pt")
+        with open(out / "lora_experts_meta.json", "w", encoding="utf-8") as f:
+            json.dump(expert_meta, f, ensure_ascii=False, indent=2, default=str)
+        if n_reported > 0 and len(weights) == 0:
+            raise RuntimeError(
+                f"LoRA pool reports {n_reported} expert(s) but none could be "
+                f"serialized (missing/unreadable adapter dirs). Refusing to write "
+                f"a silently-empty snapshot for day {meta.day}."
+            )
 
     # 世界模型
     torch.save(agent.world_model.state_dict(), out / "world_model.pt")
@@ -92,8 +186,35 @@ def find_latest_snapshot(run_dir: str | Path) -> Path | None:
     return candidates[-1][1]
 
 
+def _materialize_adapter_dir(weights: dict, cfg: dict | None) -> str | None:
+    """Write embedded expert weights + config back out as a loadable PEFT dir.
+
+    Used when the original ``adapter_path`` is gone but the snapshot still
+    carries the tensors. Returns a temp dir path, or ``None`` if we lack the
+    config needed to reload (PEFT cannot attach weights without it).
+    """
+    if not cfg:
+        return None
+    tmp = Path(tempfile.mkdtemp(prefix="trueman_expert_"))
+    try:
+        with open(tmp / "adapter_config.json", "w", encoding="utf-8") as f:
+            json.dump(cfg, f)
+        from safetensors.torch import save_file
+        save_file(weights, str(tmp / "adapter_model.safetensors"))
+        return str(tmp)
+    except Exception:
+        shutil.rmtree(tmp, ignore_errors=True)
+        return None
+
+
 def load_snapshot_into_agent(snapshot_dir: str | Path, agent) -> dict:
     """Load LoRA experts + world model + memory metadata back into a fresh agent.
+
+    For the LoRA experts this re-attaches the adapters onto the live model via
+    the pool's ``hot_loader`` so that downstream generation actually reflects
+    the learned experts (not the bare base model). It prefers each expert's
+    original on-disk ``adapter_path`` (from the sidecar) and falls back to
+    materializing the embedded weights when that directory is gone.
 
     Returns a dict describing what was loaded; missing pieces are reported
     rather than raised, so a single-component snapshot still loads gracefully.
@@ -107,22 +228,30 @@ def load_snapshot_into_agent(snapshot_dir: str | Path, agent) -> dict:
 
     # ----- LoRA experts -----
     lora_path = snap / "lora_experts.pt"
-    if lora_path.exists() and getattr(agent, "lora_pool", None) is not None:
+    pool = getattr(agent, "lora_pool", None)
+    if lora_path.exists() and pool is not None:
         try:
             experts_state = torch.load(lora_path, map_location="cpu")
+            sidecar = {}
+            meta_path = snap / "lora_experts_meta.json"
+            if meta_path.exists():
+                sidecar = json.loads(meta_path.read_text(encoding="utf-8"))
+
             n_loaded = 0
-            pool = agent.lora_pool
             for eid, sd in experts_state.items():
-                # 优先调用 pool 自有的注册接口；若无则直接写到 pool.experts
-                if hasattr(pool, "load_expert_from_state_dict"):
-                    pool.load_expert_from_state_dict(eid, sd)
-                elif hasattr(pool, "experts"):
-                    # 简化：把 state_dict 作为 expert 表示
-                    pool.experts[int(eid)] = sd
-                else:
-                    raise RuntimeError("lora_pool has neither load_expert_from_state_dict nor .experts")
-                n_loaded += 1
-            report["loaded"].append(f"lora_experts({n_loaded})")
+                emeta = sidecar.get(str(eid), {}) if isinstance(sidecar, dict) else {}
+                adapter_dir = emeta.get("adapter_path")
+                if not (adapter_dir and Path(adapter_dir).exists()):
+                    adapter_dir = _materialize_adapter_dir(sd, emeta.get("adapter_config"))
+                if adapter_dir and _reattach_expert(pool, int(eid), adapter_dir, emeta):
+                    n_loaded += 1
+
+            if n_loaded:
+                report["loaded"].append(f"lora_experts({n_loaded})")
+            if n_loaded < len(experts_state):
+                report["skipped"].append(
+                    f"lora_experts_partial({n_loaded}/{len(experts_state)})"
+                )
         except Exception as e:
             report["skipped"].append(f"lora_experts:{type(e).__name__}:{e}")
     else:
@@ -145,7 +274,6 @@ def load_snapshot_into_agent(snapshot_dir: str | Path, agent) -> dict:
     mem_path = snap / "memory_meta.json"
     if mem_path.exists():
         try:
-            import json
             meta = json.loads(mem_path.read_text(encoding="utf-8"))
             report["loaded"].append(f"memory_meta({len(meta)} traces)")
             report["memory_meta_count"] = len(meta)
@@ -155,8 +283,40 @@ def load_snapshot_into_agent(snapshot_dir: str | Path, agent) -> dict:
     return report
 
 
+def _reattach_expert(pool, eid: int, adapter_dir: str, emeta: dict) -> bool:
+    """Load one adapter dir onto the model and register its metadata.
+
+    Returns True on success. Best-effort: any failure is swallowed and reported
+    as a partial load by the caller.
+    """
+    adapter_name = f"expert_{eid}"
+    hot_loader = getattr(pool, "hot_loader", None)
+    if hot_loader is None or not hot_loader.load(adapter_name, adapter_dir):
+        return False
+    experts = getattr(pool, "experts", None)
+    if experts is not None:
+        try:
+            from trueman.core.plasticity.lora_pool import ExpertMetadata
+            import time as _time
+            experts[eid] = ExpertMetadata(
+                expert_id=eid,
+                adapter_path=adapter_dir,
+                creation_time=_time.time(),
+                rank=emeta.get("rank") or 16,
+                domain_tag=emeta.get("domain_tag", ""),
+            )
+        except Exception:
+            # Registration is bookkeeping; the adapter is already on the model.
+            pass
+    return True
+
+
 def parameter_divergence(snapshot_a: str, snapshot_b: str) -> dict[str, float]:
-    """计算两个快照之间的 LoRA 权重 Frobenius 距离。"""
+    """计算两个快照之间的 LoRA 权重 Frobenius 距离。
+
+    ``lora_experts.pt`` 的格式是 ``{expert_id: state_dict}``。只比较两侧都存在的
+    专家、且两侧都存在的张量名。
+    """
     a_path = Path(snapshot_a) / "lora_experts.pt"
     b_path = Path(snapshot_b) / "lora_experts.pt"
     if not a_path.exists() or not b_path.exists():

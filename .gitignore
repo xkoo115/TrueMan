@@ -57,8 +57,16 @@ experiments/output/
 checkpoints/
 *.ckpt
 
+# Experiment run artifacts (results, captures, snapshots, subprocess logs).
+# Code is versioned; outputs are reproducible from `rerun_v2.sh` and are never
+# committed (some are multi-GB).
+results/
+experiments/*/results/
+experiments/**/results/
+**/longhorizon/
+**/subprocess_logs/
+*.h5
+
 # ai files
 .arts
 .codeartsdoer
-
-results
