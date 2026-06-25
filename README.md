@@ -90,7 +90,7 @@ from trueman.core.agent import TrueManAgent
 from trueman.core.config import AgentConfig
 
 config = AgentConfig()
-config.base_model_name = "Qwen/Qwen2.5-7B-Instruct"
+config.base_model_name = "Qwen/Qwen3-8B"
 config.device = "cuda"
 
 agent = TrueManAgent(config)
@@ -317,7 +317,7 @@ config.update("homeostasis.gamma", 2.0)
 
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
-| `base_model_name` | Qwen/Qwen2.5-7B-Instruct | 基座模型 |
+| `base_model_name` | Qwen/Qwen3-8B | 基座模型 |
 | `api_key` | "" | API 密钥（非空则启用 API 模式） |
 | `api_base_url` | "" | API 基础 URL |
 | `api_model_name` | "" | API 模型名称 |

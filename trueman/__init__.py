@@ -8,7 +8,7 @@ def create_agent(config_path: str | None = None, **overrides):
 
     Args:
         config_path: YAML配置文件路径，None则使用默认配置
-        **overrides: 覆盖配置项，如 base_model_name="Qwen/Qwen2.5-7B-Instruct"
+        **overrides: 覆盖配置项，如 base_model_name="Qwen/Qwen3-8B"
 
     Returns:
         初始化完成的TrueManAgent实例

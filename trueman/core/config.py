@@ -69,7 +69,7 @@ class LoRAConfig:
 @dataclass
 class AgentConfig:
     """TrueMan Agent完整配置。"""
-    base_model_name: str = "Qwen/Qwen2.5-7B-Instruct"
+    base_model_name: str = "Qwen/Qwen3-8B"
     device: str = "cuda"
     memory_size: int = 10000
     # 1000→30：sleep 整合（= 训练 LoRA 专家 = 参数可塑性）按"清醒步数 >= awake_threshold

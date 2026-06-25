@@ -9,12 +9,12 @@
 用法：
     python -m experiments.v2_ambitious.pillar1_mechanistic.train_sae \
         --captures captures.h5 \
-        --layer 16 \
+        --layer 18 \
         --dict-size 16384 \
         --top-k 64 \
         --epochs 5 \
         --batch-size 4096 \
-        --output sae_layer16.pt
+        --output sae_layer18.pt
 """
 
 from __future__ import annotations

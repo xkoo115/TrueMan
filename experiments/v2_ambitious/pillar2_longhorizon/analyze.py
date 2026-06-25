@@ -25,7 +25,7 @@ def collect_runs(root: Path):
     for d in root.iterdir():
         if not d.is_dir():
             continue
-        # 目录名形如 C0_trueman_full_seed0_Qwen_Qwen2.5-7B-Instruct
+        # 目录名形如 C0_trueman_full_seed0_Qwen_Qwen3-8B
         parts = d.name.split("_seed")
         if len(parts) != 2:
             continue

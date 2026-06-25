@@ -106,7 +106,7 @@ fi
 # Pilot vs Paper scale
 # ----------------------------------------------------------------------
 CONDITIONS="C0_trueman_full,C1_reversed,C2_scrambled,C3_frozen,C4_trivial_jaccard"
-MODELS="Qwen/Qwen2.5-7B-Instruct"
+MODELS="Qwen/Qwen3-8B"
 
 if $PAPER; then
     SEEDS="0,1,2,3"

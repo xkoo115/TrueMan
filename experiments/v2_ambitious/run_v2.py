@@ -322,7 +322,7 @@ def stage6_summary(args) -> None:
         "analysis_pillar2": "experiments/v2_ambitious/results/analysis_pillar2.json",
         "fep_h5": "experiments/v2_ambitious/results/fep_h5.json",
         "indicators_summary": "experiments/v2_ambitious/results/indicators/indicators_summary.json",
-        "sae": "experiments/v2_ambitious/results/mechanistic/sae_layer16.pt",
+        "sae": "experiments/v2_ambitious/results/mechanistic/sae_layer18.pt",
         "features": "experiments/v2_ambitious/results/mechanistic/features_anxiety.json",
     }
     for key, f in result_files.items():
@@ -441,7 +441,7 @@ def status() -> None:
         "stage0 probes":     Path("experiments/v2_ambitious/data/probes/metacog_full.jsonl").exists(),
         "stage1 longhorizon": any(Path("experiments/v2_ambitious/results/longhorizon").glob("*/trajectory.csv"))
                                if Path("experiments/v2_ambitious/results/longhorizon").exists() else False,
-        "stage2 SAE":        Path("experiments/v2_ambitious/results/mechanistic/sae_layer16.pt").exists(),
+        "stage2 SAE":        Path("experiments/v2_ambitious/results/mechanistic/sae_layer18.pt").exists(),
         "stage2 features":   Path("experiments/v2_ambitious/results/mechanistic/features_anxiety.json").exists(),
         "stage3 indicators": Path("experiments/v2_ambitious/results/indicators/indicators_summary.json").exists(),
         "stage5 analysis":   Path("experiments/v2_ambitious/results/analysis_pillar2.json").exists(),

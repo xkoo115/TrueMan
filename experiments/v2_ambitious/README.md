@@ -59,7 +59,7 @@ python -m experiments.v2_ambitious.run_v2 --stage all --dry-run
 # 3. 看进度
 python -m experiments.v2_ambitious.run_v2 --status
 
-# 4. 真正跑一个最小条件子集（Qwen2.5-7B + C0 + 1 seed）
+# 4. 真正跑一个最小条件子集（Qwen3-8B + C0 + 1 seed）
 python -m experiments.v2_ambitious.run_v2 \
     --stage all \
     --conditions C0_trueman_full,C3_frozen \

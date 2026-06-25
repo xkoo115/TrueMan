@@ -1,4 +1,4 @@
-base_model_name: Qwen/Qwen2.5-7B-Instruct
+base_model_name: Qwen/Qwen3-8B
 device: cuda
 memory_size: 10000
 awake_threshold: 1000

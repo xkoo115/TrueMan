@@ -6,13 +6,13 @@ run_v2.py 调度，每个组合一个独立进程/job。
 用法：
     python -m experiments.v2_ambitious.pillar2_longhorizon.run \
         --condition C0_trueman_full \
-        --base-model Qwen/Qwen2.5-7B-Instruct \
+        --base-model Qwen/Qwen3-8B \
         --seed 0 \
         --stream experiments/v2_ambitious/data/stimulus_stream.jsonl \
         --days 30 \
         --hours-per-day 24 \
         --output experiments/v2_ambitious/results/longhorizon \
-        --capture-layers 8 16 24 30 \
+        --capture-layers 9 18 27 \
         --probe-every-days 7
 """
 

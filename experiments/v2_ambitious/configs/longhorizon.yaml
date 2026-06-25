@@ -21,18 +21,18 @@ conditions:
   - C4_trivial_jaccard
 
 base_models:
-  - Qwen/Qwen2.5-7B-Instruct      # 已下载，4-bit ≈ 5GB VRAM，留 ~27GB 给 hooks/SAE
+  - Qwen/Qwen3-8B                  # dense Qwen3ForCausalLM，36 层 / hidden 4096；4-bit ≈ 6GB VRAM
   # 跨模型证伪解锁：硬件够时手动取消注释（每多一个模型 stage1 时长 +16h）
   # - meta-llama/Llama-3.1-8B-Instruct
   # - mistralai/Mistral-7B-Instruct-v0.3
 
 seeds: [0, 1]              # pilot：2 seed（原 4）；统计可后续扩展
 
-quantization: 4bit         # bitsandbytes 4-bit；7B → ~5GB VRAM
+quantization: 4bit         # bitsandbytes 4-bit；Qwen3-8B → ~6GB VRAM
 device: cuda
 
 capture:
-  layers: [8, 16, 24]      # 修复 BUG：原 [8,16,24,30] 在 Qwen2.5-7B (28 层) 上越界
+  layers: [9, 18, 27]      # Qwen3-8B 共 36 层；取 1/4·1/2·3/4 深度（SAE 用中层 18，必须 ∈ 本列表）
   token_pool: last
   quantize: int8
   flush_every: 200         # 频繁刷盘减小峰值显存
