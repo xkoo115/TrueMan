@@ -50,7 +50,7 @@
 
 ## 🔬 实验验证（v2 预注册协议）
 
-论文级实验在 [`experiments/v2_ambitious/`](experiments/v2_ambitious/) 下，按照 [OSF 预注册协议](experiments/v2_ambitious/PREREGISTRATION.md) 进行，**5 实验条件 × N seed × M 底模 × 30 天连续交互**，由六阶段流水线 (`run_v2.py`) 调度，分别检验 5 个假设：
+论文级实验在 [`experiments/v2_ambitious/`](experiments/v2_ambitious/) 下，按照 [OSF 预注册协议](experiments/v2_ambitious/PREREGISTRATION.md) 进行，**5 实验条件 × N seed × M 底模 × 14 天连续交互**（默认 pilot 规模；可在 `configs/longhorizon.yaml` 扩展），由七阶段流水线 (`run_v2.py`) 调度，分别检验 5 个假设：
 
 | 假设 | 核心问题 | 主要指标 | 由哪个支柱回答 |
 |:----:|:--------|:--------|:------|
@@ -131,36 +131,81 @@ python examples/chat_demo.py
 
 ---
 
-## 🧪 运行 v2 预注册实验
+## 🧪 运行 v2 实验（手把手，小白友好）
 
-完整文档见 [`experiments/v2_ambitious/README.md`](experiments/v2_ambitious/README.md)；这里是最常用的几条命令。
+> **一句话流程**：装环境 → （首次自动下模型）→ 跑一键脚本 → 去 `results/` 看结果。
+> 下面每一步都可以直接复制命令执行。完整细节见 [`experiments/v2_ambitious/README.md`](experiments/v2_ambitious/README.md)。
 
-### 0. 依赖
+整套实验由一个调度器 `run_v2.py` 串起 **7 个阶段（stage0→stage6）**：生成刺激流 → 5 条件长时程交互 → 训练 SAE + 因果干预 → 意识指标电池 → 跨底模复现 → 理论拟合 → 汇总判定。默认配置（`configs/longhorizon.yaml`）：**5 条件 × 2 seed × Qwen3-8B × 14 天（每天 24 步）**。
+
+### 步骤 0：硬件 / 系统要求
+
+| 项目 | 要求 |
+|------|------|
+| GPU | 一张 NVIDIA 显卡，显存 **≥ 16GB**（参考配置：单卡 RTX 4080 Super 32GB） |
+| 系统 | **Linux 或 WSL2**（一键脚本是 bash + `.venv`）。Windows 原生用户请用 **Git Bash**，或直接执行下文的 `python -m ...` 命令 |
+| 软件 | Python 3.10+、对应版本的 NVIDIA 驱动 / CUDA |
+| 磁盘 | **≥ 30GB**（Qwen3-8B 权重约 16GB + 每个 run 的 `captures.h5` 激活） |
+| 时间 | 完整 5×2 矩阵在单卡 4080 Super 约 **1–1.5 天**（stage1 最耗时 ~16–20h，其余 ~4–6h） |
+
+### 步骤 1：克隆 + 装依赖
 
 ```bash
-# 在 pip install -e . 之外补充实验所需
-pip install h5py pyyaml pymer4 statsmodels scikit-learn scipy transformers peft
+git clone https://github.com/xkoo115/TrueMan.git
+cd TrueMan
+
+# 建议建虚拟环境（一键脚本默认就找 .venv/bin/python）
+python -m venv .venv
+source .venv/bin/activate              # Windows Git Bash: source .venv/Scripts/activate
+
+pip install -e .
+# 实验额外依赖（4-bit 量化需要 bitsandbytes）
+pip install h5py pyyaml pymer4 statsmodels scikit-learn scipy transformers peft bitsandbytes
 ```
 
-### 1. 先做 dry-run + 状态检查（不耗显卡）
+### 步骤 2：准备底模（一般无需手动操作）
+
+默认底模是 **`Qwen/Qwen3-8B`**（在 `experiments/v2_ambitious/configs/longhorizon.yaml` 里配置）。**首次运行会自动从 HuggingFace 下载（约 16GB）**。如遇到需要登录或网络受限：
 
 ```bash
-python -m experiments.v2_ambitious.run_v2 --stage all --dry-run     # 打印将要执行的全部命令
-python -m experiments.v2_ambitious.run_v2 --status                  # 查看每个 stage 是否已完成
+huggingface-cli login                  # 如需鉴权
+# 国内网络可设镜像：export HF_ENDPOINT=https://hf-mirror.com
 ```
 
-> **一键干净复现（推荐）**：拉取最新修复后，直接跑
-> [`experiments/v2_ambitious/rerun_v2.sh`](experiments/v2_ambitious/rerun_v2.sh)。
-> 它会清掉旧的派生结果与失效的 LoRA 专家、重建刺激流，然后 `--force` 跑完
-> stage0→6（seeds 0,1）。长任务（约 16–20h），建议 `nohup ... &` 后台运行。
-> ```bash
-> nohup bash experiments/v2_ambitious/rerun_v2.sh > rerun.out 2>&1 &
-> tail -f experiments/v2_ambitious/results/run_v2.log
-> ```
+### 步骤 3：空跑自检（不耗 GPU，约 30 秒）
 
-### 2. Pilot（推荐先跑这个）
+正式跑之前，先确认命令链路和依赖没问题：
 
-最小可分析子集：2 条件 × 1 seed × 7 天，约 5 GPU-day 完成：
+```bash
+# 打印将要执行的全部命令，但不真正运行（看流程）
+python -m experiments.v2_ambitious.run_v2 --stage all --dry-run
+
+# 查看每个 stage 当前是否已完成（哪些产物已存在）
+python -m experiments.v2_ambitious.run_v2 --status
+```
+
+### 步骤 4（✅ 推荐小白走这条）：一键跑完整实验
+
+```bash
+# 后台运行，日志写到 rerun.out；终端关掉也不中断
+nohup bash experiments/v2_ambitious/rerun_v2.sh > rerun.out 2>&1 &
+
+# 另开一个终端，实时看进度
+tail -f experiments/v2_ambitious/results/run_v2.log
+```
+
+[`rerun_v2.sh`](experiments/v2_ambitious/rerun_v2.sh) 会自动完成「干净复现」的全部准备工作，你**不需要**手动清理任何东西：
+
+1. 删掉旧的派生结果（`longhorizon/`、`mechanistic/`、`indicators/`、各种汇总 json）；
+2. 删掉旧刺激流并按新配置重建（14 天 × 24 步 = 336 步）；
+3. 清空 `adapters/`（旧的失效 LoRA 专家，避免污染可塑性）；
+4. 归档旧的 `run_v2.log`，然后 `--force` 跑完 **stage0→stage6（seeds 0,1）**。
+
+跑完后直接看「步骤 5」里的结果目录即可。
+
+### 步骤 4-轻量版：只想先验证管线能跑通？跑 Pilot
+
+最小可分析子集（2 条件 × 1 seed），几小时内出结果，适合第一次摸流程：
 
 ```bash
 python -m experiments.v2_ambitious.run_v2 \
@@ -169,43 +214,57 @@ python -m experiments.v2_ambitious.run_v2 \
     --seeds 0
 ```
 
-### 3. 完整 5 条件矩阵
+### 步骤 4-进阶版：手动分阶段跑（想理解或部分重跑时）
+
+每个 stage 都能单独跑；加 `--force` 可强制重跑已完成的阶段：
 
 ```bash
-# stage 0: 生成刺激流 + probe 文件
-python -m experiments.v2_ambitious.run_v2 --stage stage0
-
-# stage 1: 5 条件 × 2 seeds × 1 底模 × 7 天长时程交互（最耗时）
-python -m experiments.v2_ambitious.run_v2 --stage stage1
-
-# stage 2: SAE 训练 + 因果干预（H3 证据）
-python -m experiments.v2_ambitious.run_v2 --stage stage2
-
-# stage 3: HOT-1/2、GWT、RPT、Φ^R 指标电池
-python -m experiments.v2_ambitious.run_v2 --stage stage3
-
-# stage 4: 跨底模批量复现
-python -m experiments.v2_ambitious.run_v2 --stage stage4
-
-# stage 5+6: FEP/PCI 拟合 + 假设判定汇总
-python -m experiments.v2_ambitious.run_v2 --stage stage5
-python -m experiments.v2_ambitious.run_v2 --stage stage6
+python -m experiments.v2_ambitious.run_v2 --stage stage0   # 生成刺激流 + probe 文件
+python -m experiments.v2_ambitious.run_v2 --stage stage1   # 5 条件 × 2 seed × 14 天长时程交互（最耗时）
+python -m experiments.v2_ambitious.run_v2 --stage stage2   # 训练 SAE + 焦虑特征因果干预（H3 证据）
+python -m experiments.v2_ambitious.run_v2 --stage stage3   # HOT-1/2 + GWT + RPT + Φ^R 指标电池
+python -m experiments.v2_ambitious.run_v2 --stage stage4   # 跨底模批量复现
+python -m experiments.v2_ambitious.run_v2 --stage stage5   # FEP / PCI 理论拟合
+python -m experiments.v2_ambitious.run_v2 --stage stage6   # 跨阶段汇总 + 假设判定
 ```
 
-完整 5 条件 × 4 底模 × 4 seed × 30 天 ≈ 200 GPU-day，请按算力裁剪 `configs/longhorizon.yaml`。
+> 想加底模 / seed / 天数做 paper-scale？改 `configs/longhorizon.yaml`（取消注释 Llama/Mistral、`seeds: [0,1,2,3]`）后 `--force` 重跑即可。
 
-### 4. 输出与论文图复现
+### 步骤 5：结果保存在哪里 📁
 
-| 路径 | 内容 |
-|------|------|
-| `experiments/v2_ambitious/results/longhorizon/*/trajectory.csv` | 每步 surprise/boredom/anxiety/drive |
-| `experiments/v2_ambitious/results/longhorizon/*/snapshots/` | 每日 LoRA + world-model + memory 快照 |
-| `experiments/v2_ambitious/results/longhorizon/*/probes/` | 周度 probe battery 响应 |
-| `experiments/v2_ambitious/results/indicators/` | HOT-1/2 + GWT + RPT + Φ^R 数值 |
-| `experiments/v2_ambitious/results/subprocess_logs/` | 每个子任务的 stdout/stderr 日志（失败时第一个看的地方） |
-| `experiments/v2_ambitious/results/v2_summary.json` | 跨阶段汇总 + 假设判定 |
+**所有实验产物都在 `experiments/v2_ambitious/results/` 下**（该目录已在 `.gitignore` 中，不会被提交）：
 
-跑完后用以下脚本生成论文图（无需 GPU）：
+```
+experiments/v2_ambitious/results/
+├── run_v2.log                     # 主调度日志（看整体进度，第一个看的文件）
+├── v2_summary.json                # ★ 跨阶段汇总 + 5 个假设判定（最终结论看这里）
+├── longhorizon/                   # stage1：每个 condition×seed 一个子目录
+│   └── C0_trueman_full_seed0_Qwen_Qwen3-8B/
+│       ├── trajectory.csv         #   每步 surprise/boredom/anxiety/drive
+│       ├── captures.h5            #   隐藏层激活（供 SAE 训练）
+│       ├── snapshots/dayNNN_.../  #   每日 LoRA 专家 + 世界模型 + 记忆快照
+│       └── probes/                #   周期 probe battery 响应
+├── mechanistic/                   # stage2：SAE + 因果干预
+│   ├── sae_layer18.pt             #   训练好的稀疏自编码器
+│   ├── features_anxiety.json      #   焦虑相关特征
+│   └── intervention/              #   clamp/inject/off 干预结果
+├── indicators/                    # stage3：HOT/GWT/RPT/Φ^R 指标数值
+│   └── indicators_summary.json
+├── analysis_pillar2.json          # stage5：轨迹散度 / 遗忘 / retention
+├── fep_h5.json                    # stage5：自由能 power-law 拟合
+├── cross_model/                   # stage4：跨底模复现
+└── subprocess_logs/               # 每个子任务的 stdout/stderr（排查失败第一站）
+```
+
+| 你想看什么 | 去哪个文件 |
+|------------|-----------|
+| **最终 5 个假设结论** | `v2_summary.json` → `hypothesis_verdicts` |
+| 整体跑到哪了 / 报错 | `run_v2.log` |
+| 情绪信号随时间变化 | `longhorizon/*/trajectory.csv` |
+| 意识指标数值 | `indicators/indicators_summary.json` |
+| 某个 stage 崩了的栈 | `subprocess_logs/{stage}.log` |
+
+### 步骤 6：生成论文图（无需 GPU）
 
 ```bash
 python docs/sn-article-v2/analysis/analyze_phi_r.py
@@ -213,23 +272,23 @@ python docs/sn-article-v2/analysis/analyze_phi_r.py
 #   docs/sn-article-v2/figures/fig_phi_r.{pdf,png}
 #   docs/sn-article-v2/figures/fig_pipeline_status.{pdf,png}
 #   docs/sn-article-v2/analysis/phi_r_stats.json
-```
 
-LaTeX 编译：
-
-```bash
+# 编译论文 PDF：
 cd docs/sn-article-v2
 pdflatex sn-article-v2 && bibtex sn-article-v2 && pdflatex sn-article-v2 && pdflatex sn-article-v2
 ```
 
-### 5. 子进程崩了怎么排查
+### 步骤 7：出错了怎么排查 🔧
 
-run_v2 现在会把每个 subprocess 的 stdout/stderr 写到 `results/subprocess_logs/{stage}.log`，失败时父进程日志还会回吐最后 80 行 traceback。第一次诊断顺序：
+调度器会把每个子任务的 stdout/stderr 写到 `results/subprocess_logs/{stage}.log`，失败时主日志还会回吐最后 80 行 traceback。诊断顺序：
 
 ```bash
-tail -100 experiments/v2_ambitious/results/run_v2.log
-ls experiments/v2_ambitious/results/subprocess_logs/   # 找最近失败的 stage 日志
+tail -100 experiments/v2_ambitious/results/run_v2.log     # 1. 先看主日志最后在做什么
+ls -lt experiments/v2_ambitious/results/subprocess_logs/  # 2. 找最近修改的 stage 日志
+python -m experiments.v2_ambitious.run_v2 --status        # 3. 确认哪些 stage 还没完成
 ```
+
+常见问题：显存不够 → 确认 `quantization: 4bit` 且 `bitsandbytes` 已装；刺激流报 "stream too short" → 跑一键脚本或先 `--stage stage0` 重建。
 
 ---
 
@@ -263,11 +322,11 @@ TrueMan/
 │   ├── v2_ambitious/          # ★ 当前论文实验（预注册协议）
 │   │   ├── PREREGISTRATION.md #   OSF 预注册文档
 │   │   ├── README.md          #   v2 实验详细说明
-│   │   ├── run_v2.py          #   六阶段调度主入口
+│   │   ├── run_v2.py          #   七阶段（stage0→6）调度主入口
 │   │   ├── configs/           #   长时程 / 机制 / indicator 配置
 │   │   ├── harness/           #   5 条件包装 + capture + snapshot + stats
 │   │   ├── pillar1_mechanistic/  # H3：SAE + 因果干预
-│   │   ├── pillar2_longhorizon/  # H4 + H5：30 天连续运行
+│   │   ├── pillar2_longhorizon/  # H4 + H5：14 天连续运行
 │   │   ├── pillar3_indicators/   # HOT-1/2 + GWT + RPT + Φ^R
 │   │   ├── pillar4_falsification/# 跨底模复现
 │   │   ├── pillar5_theory/    #   FEP 拟合 + PCI
@@ -380,14 +439,14 @@ TrueMan 的设计基于计算神经科学的前沿研究：
 ## 🧪 测试
 
 ```bash
-# 运行全部测试（78 项，~6 秒）
+# 运行全部测试（58 项，无需 GPU）
 pytest tests/ -v
 
-# 仅运行 v2 实验流水线回归测试（14 项，无需 GPU）
+# 仅运行 v2 实验流水线回归测试（23 项）
 pytest tests/test_v2_pipeline.py -v
 ```
 
-`tests/test_v2_pipeline.py` 中每个 case 都对应一个 v2 stage-1 历史失败模式（trajectory.csv writer、numpy 2.x trapz、子进程日志捕获、snapshot 天数核算、5 条件配置一致性）。在 re-run v2 实验前先跑这一组以确认本地没有回归。
+`tests/test_v2_pipeline.py` 中每个 case 都对应一个 v2 stage-1 历史失败模式（trajectory.csv writer、numpy 2.x trapz、子进程日志捕获、snapshot 天数核算、5 条件配置一致性、**Bug 9 LoRA 专家快照持久化**）。在 re-run v2 实验前先跑这一组以确认本地没有回归。
 
 ---
 
